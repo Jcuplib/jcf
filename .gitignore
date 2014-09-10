@@ -1,0 +1,8 @@
+*~
+*.o
+*.mod
+*.lst
+bin/*
+lib/*
+include/*
+
