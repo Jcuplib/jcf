@@ -36,7 +36,7 @@ FOTHERFLAGS	=
 INCFLAGS	= -I$(INCDIR)
 
 #### Final compile options
-FFLAGS	= $(OPTFLAGS)  $(DBGFLAGS) $(LANGFLAGS) $(FOTHERFLAGS) $(FINCDIR) 
+FFLAGS	= $(OPTFLAGS)  $(DBGFLAGS) $(LANGFLAGS) $(FOTHERFLAGS) $(INCFLAGS) 
 
 ### make clean remove these
 TRASH	= *~ *.o *.mod
