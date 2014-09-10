@@ -1,0 +1,68 @@
+# -*- makefile -*- for JCF library.
+JCF_SYS	= PGI
+
+### Directories. JCFDIR should be defined as an environmental variable.
+
+
+# JCFDIR = $(HOME)/jcf
+PREFIX	= $(JCFDIR)
+SRCDIR	= $(PREFIX)/core
+APPDIR	= $(PREFIX)/app
+BINDIR	= $(PREFIX)/bin
+INCDIR	= $(PREFIX)/include
+LIBDIR	= $(PREFIX)/lib
+
+### Fortran compiler settings
+FC	= pgf95
+# FC	= mpifrtpx
+
+### for optimize
+OPTFLAGS	= -O3
+# OPTFLAGS	= -O0
+
+### for debug
+DBGFLAGS	= 
+# DBGFLAGS	= -g
+
+### Fortran Language related options
+LANGFLAGS	= 
+LANGFLAGS	+= -Mbyteswapio
+
+
+### other compiler specific options
+FOTHERFLAGS	= 
+
+### Where *.mod lives.
+INCFLAGS	= -I$(INCDIR)
+
+#### Final compile options
+FFLAGS	= $(OPTFLAGS)  $(DBGFLAGS) $(LANGFLAGS) $(FOTHERFLAGS) $(FINCDIR) 
+
+### make clean remove these
+TRASH	= *~ *.o *.mod
+
+
+### Linker settings
+LD	= $(FC)
+LDFLAGS	= 
+LIBS	=
+LIBDIRS	=
+
+### Archiver settings
+AR	= ar rv
+RANLIB	= true 
+
+### Other commands
+CP	= cp -f
+RM	= rm -rf
+MKDIR	= mkdir -p
+INSTALL	= cp -u
+# INSTALL = install
+
+#### Imitate GNU Makefile
+.SUFFIXES	:.o .mod .f90 .a
+
+COMPILE.f90 = $(FC) $(FFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+
+%.o	: %.f90
+	$(COMPILE.F) $<
