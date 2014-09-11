@@ -13,7 +13,7 @@ core and app
 The `core` directory contains JCF core modules. The `app` directory
 contains ''application'' using JCF core modules.
 
-''Application'' modules shouled be implemented for each ''grid''
+''Application'' modules should be implemented for each ''grid''
 Jcup-used coupler handles. For exmaple, there is a NICAM-COCO coupled
 model powered by Jcup, there is an application module for NICAM grid
 and the one for COCO grid.
@@ -23,8 +23,5 @@ but also tools to visualize relation of two grids, etc.
 
 Currently, application modules for NICAM grid, NICAM-IO grid are
 implemented.  The `example` directory contains mappingtable-creation
-program for these two grids.
+program for these two grids, as a sample.
 
-`example` directory contains sample program to create mappingtable
-between NICAM grid and NICAM-IO grid, using core library and app
-modules.
