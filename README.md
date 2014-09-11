@@ -7,8 +7,23 @@ JCF is a free software, you can use it under the terms of The MIT
 License (MIT). See `LICENSE` file and User's guide for more details.
                                                               
 
-core and app
+JCF and Jcup
 ============
+
+JCF is intended to be used to handle two or more ''grid'' or ''mesh''
+to create mappingtable between them.  And more, for example, you can
+use this to visualize the relation between grid points or control
+volumes, etc.
+
+When you create your own coupler with Jcup, you have to prepare the
+''mappingtable'', which describe reation and weigts between grids of
+coupled components by yourself.
+
+JCF may help you to create this mappingtable.
+
+
+JCF ''core'' and ''app''
+========================
 
 The `core` directory contains JCF core modules. The `app` directory
 contains ''application'' using JCF core modules.
