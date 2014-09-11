@@ -994,17 +994,31 @@ logical function is_in_this_polygon(x, y, polygon, is_lat_lon)
   real(kind=8), intent(IN) :: x, y
   type(polygon_type), intent(IN) :: polygon
   logical, intent(IN) :: is_lat_lon
-  real(kind=8) :: x0, y0, x1, y1, x2, y2
+  real(kind=8) :: x0, y0, x1, y1, x2, y2,xm
   integer :: i
 
   is_in_this_polygon = .false.
   
+  !write(0,*) "DBG:is_in_this_polygon ", polygon%num_of_point-2, is_lat_lon
+  !write(0,*) "        x,  y : ",x,y
+  !write(0,*) " min_xp,min_yp: ",polygon%min_xp,polygon%min_yp
+  !write(0,*) " max_xp,max_yp: ",polygon%max_xp,polygon%max_yp
+
   if (is_lat_lon) then
     !write(0,*) "is_in_this_polygon ", x, polygon%max_xp, polygon%min_xp
     !write(0,*) "                   ", y, polygon%max_yp, polygon%min_yp
     !if ((x < polygon%min_xp).or.(x > polygon%max_xp)) return
-    if ((polygon%max_xp-polygon%min_xp) < mod(x-polygon%min_xp, 360.d0)) return
+    !if ((polygon%max_xp-polygon%min_xp) < mod(x-polygon%min_xp, 360.d0)) return
+    xm = polygon%min_xp
+    x0 = mod(x-xm,360.d0)
+    x1 = mod(polygon%min_xp-xm,360.d0)
+    x2 = mod(polygon%max_xp-xm,360.d0)
+    !write(0,*) "x, min_xp,max_xp:",x, polygon%min_xp,polygon%max_xp
+    !write(0,*) "x0,x1,x2:",x0, x1,x2,((x0 < x1).or.(x2 < x0))
+    if ((x0 < x1).or.(x2 < x0)) return
+!    write(0,*) "y,min_yp,max_yp:",y,polygon%min_yp,polygon%max_yp,((y < polygon%min_yp).or.(y > polygon%max_yp))
     if ((y < polygon%min_yp).or.(y > polygon%max_yp)) return
+    !write(0,*)'BINGO!'
     is_in_this_polygon = .true.
     return
   end if
