@@ -22,8 +22,6 @@
 module jcf_sphere_lib
 implicit none
 
-  public :: write_PI
-
   public :: cal_inverse_matrix
   public :: latlon2xyz
   public :: xyz2latlon
@@ -59,22 +57,13 @@ implicit none
     module procedure xyz2latlon_double, xyz2latlon_quad_double, xyz2latlon_quad
   end interface
 
-  real(kind=8), public :: PI   !< the circular constant \f$\pi\f$
-  real(kind=16), public :: PIQ !< the circular constant \f$\pi\f$ in quadruple precision.
-  real(kind=8), public :: D2R  !< coefficient for degree to radian.
+  real(kind=8),  public, save :: PI !< the circular constant \f$\pi\f$
+  real(kind=16), public, save :: PIQ !< the circular constant \f$\pi\f$ in quadruple precision.
+  real(kind=8),  public, save :: D2R !< coefficient for degree to radian.
 
   logical,private :: is_initialized = .false.
 
 contains
-
-subroutine write_PI(test_str)
-  implicit none
-  character(len=*), intent(IN) :: test_str
-
-  write(0,*) trim(test_str)
-  write(0,*) "write_PI ", PI
-
-end subroutine write_PI
 
 !===================================================================================
 !> initialize this library
@@ -567,9 +556,12 @@ subroutine latlon2xyz_double(lat, lon, x, y, z)
   real(kind=8), intent(OUT) :: y !< y in cartesian
   real(kind=8), intent(OUT) :: z !< z in cartesian
 
-  x = cos(lat/180.d0*PI)*cos(lon/180.d0*PI)
-  y = cos(lat/180.d0*PI)*sin(lon/180.d0*PI)
-  z = sin(lat/180.d0*PI)
+!!$d  x = cos(lat/180.d0*PI)*cos(lon/180.d0*PI)
+!!$d  y = cos(lat/180.d0*PI)*sin(lon/180.d0*PI)
+!!$d  z = sin(lat/180.d0*PI)
+  x = cos(lat*D2R)*cos(lon*D2R)
+  y = cos(lat*D2R)*sin(lon*D2R)
+  z = sin(lat*D2R)
 
 end subroutine latlon2xyz_double
 
@@ -619,6 +611,19 @@ subroutine xyz2latlon_double(x, y, z, lat, lon)
   real(kind=8), intent(OUT) :: lat !< latitude [deg]
   real(kind=8), intent(OUT) :: lon !< longitude [deg]
 
+  real(kind=8),parameter :: EPSLN=1.d-12
+!
+  if ( abs(x) < EPSLN .and. abs(y) < EPSLN ) then
+    lon = 0.d0
+    if ( z > 0.d0 ) then
+      lat = 90.d0
+    else
+      lat = -90.d0
+    end if
+    return
+  end if
+
+
   lat = atan2(z, sqrt(x*x+y*y))
   !lon = acos(x/cos(lat))
   lon = acos(x/sqrt(x*x+y*y))
@@ -627,6 +632,10 @@ subroutine xyz2latlon_double(x, y, z, lat, lon)
   lon = lon*180.d0/pi
 
   if (y<0) lon = 360.d0-lon
+
+  if ( abs(x) < EPSLN ) then
+    write(33,*)'xyz2latlon_double:',x,y,z,lon,lat
+  end if
 
 end subroutine xyz2latlon_double
 
