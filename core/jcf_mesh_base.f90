@@ -683,7 +683,6 @@ end subroutine inc_search_counter
 !=======+=========+=========+=========+=========+=========+=========+=========+
 !> search polygons overlapped on this polygon
 subroutine search_polygon(this_polygon, start_polygon, lat_lon_latitude)
-  use jcf_sphere_lib, only : write_PI
   implicit none
   type(polygon_type), pointer :: this_polygon            !< target polygon
   type(polygon_ptr_type), pointer :: start_polygon(:)    !< start polygon
@@ -698,11 +697,6 @@ subroutine search_polygon(this_polygon, start_polygon, lat_lon_latitude)
   integer :: before_index
   integer :: p, pp
   integer :: ii, jj, ll
-
-  !call write_PI("search_polygon 1")
-   
-  !call mpi_finalize(ii)
-  !stop
 
       do p = 1, this_polygon%num_of_point   
  
