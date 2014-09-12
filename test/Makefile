@@ -9,7 +9,8 @@ LDLIBS = -ljcf
 LIB=../core/libjcf.a
 
 EXE = \
- test_cal_great_circle_area
+ test_cal_great_circle_area \
+ test_get_length
 
 TRASH= *~ *.o *.lst
 
