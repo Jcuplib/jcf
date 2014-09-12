@@ -1,6 +1,6 @@
 ### Makefile for examples.
 
-include ../sysdep/Mkinclude.$(JCF_SYS)
+include ../Mkinclude
 
 EXE	= mkmappingtable
 OBJS	= \

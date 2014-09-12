@@ -1,5 +1,5 @@
 # -*- makefile -*- for JCF library.
-JCF_SYS	= PGI
+JCFSYS	= PGI
 
 ### Directories. JCFDIR should be defined as an environmental variable.
 

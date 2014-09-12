@@ -1,4 +1,4 @@
-include ../sysdep/Mkinclude.$(JCF_SYS)
+include ../Mkinclude
 
 LIB	= libjcf.a
 
