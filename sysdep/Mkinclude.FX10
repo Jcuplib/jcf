@@ -1,5 +1,5 @@
 # -*- makefile -*- for JCF library.
-JCF_SYS	= FX10
+JCFSYS	= FX10
 
 ### Directories. JCFDIR should be defined as an environmental variable.
 

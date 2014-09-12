@@ -1,2 +1,6 @@
+/io_grid.f90
 /mapping_table_nicam_to_io.txt
 /mk_mappingtable.log
+/mkmappingtable
+/mod_logfile.f90
+/nicam_grid.f90

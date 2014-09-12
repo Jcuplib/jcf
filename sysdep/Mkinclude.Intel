@@ -1,5 +1,5 @@
 # -*- makefile -*- for JCF library.
-JCF_SYS	= Intel
+JCFSYS	= Intel
 
 ### Directories. JCFDIR should be defined as an environmental variable.
 

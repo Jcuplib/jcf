@@ -1,5 +1,5 @@
 # -*- makefile -*- for JCF library.
-JCF_SYS	= GNU
+JCFSYS	= GNU
 
 ### Directories. JCFDIR should be defined as an environmental variable.
 
