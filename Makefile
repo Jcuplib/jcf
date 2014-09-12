@@ -2,7 +2,8 @@
 
 include ./Mkinclude
 
-all lib install:
+all: install
+install:
 	$(MAKE) -C core $@
 
 clean realclean distclean:
@@ -17,3 +18,9 @@ clean-bin:
 	$(RM) ./lib/*
 	$(RM) ./include/*
 
+core:
+	$(MAKE) -C $@
+app example: install
+	$(MAKE) -C $@
+
+.PHONY: core app example
