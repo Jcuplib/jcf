@@ -13,7 +13,8 @@ EXE = \
  test_latlon2xyz \
  test_cal_great_circle_area \
  test_get_length \
- test_is_same_point
+ test_is_same_point \
+ test_is_on_line
 
 TRASH= *~ *.o *.lst
 
