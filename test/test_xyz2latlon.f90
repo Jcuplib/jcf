@@ -24,15 +24,15 @@ program test_xyz2latlon
     write(*,'(1x,3(F21.15,5x))') xd,yd,zd
     write(*,'(1x,3(F40.34,6x))') xq,yq,zq
 
-    call xyz2latlon( xd,yd,zd,dlon,dlat)
+    call xyz2latlon( xd,yd,zd,dlat,dlon)
     write(*,*)'xyz2latlon_double:'
     write(*,'(2(F21.15,5x))') dlon,dlat
 
-    call xyz2latlon( xq,yq,zq,dlon,dlat)
+    call xyz2latlon( xq,yq,zq,dlat,dlon)
     write(*,*)'xyz2latlon_quad_double:'
     write(*,'(2(F21.15,5x))') dlon,dlat
 
-    call xyz2latlon( xq,yq,zq,qlon,qlat)
+    call xyz2latlon( xq,yq,zq,qlat,qlon)
     write(*,*)'xyz2latlon_quad:'
     write(*,'(2(F40.34,6x))') qlon,qlat
 
