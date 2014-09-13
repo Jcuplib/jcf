@@ -9,6 +9,7 @@ LDLIBS = -ljcf
 LIB=../core/libjcf.a
 
 EXE = \
+ test_xyz2latlon \
  test_cal_great_circle_area \
  test_get_length
 
