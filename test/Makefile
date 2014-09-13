@@ -12,7 +12,8 @@ EXE = \
  test_xyz2latlon \
  test_latlon2xyz \
  test_cal_great_circle_area \
- test_get_length
+ test_get_length \
+ test_is_same_point
 
 TRASH= *~ *.o *.lst
 
