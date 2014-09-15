@@ -14,7 +14,8 @@ EXE = \
  test_cal_great_circle_area \
  test_get_length \
  test_is_same_point \
- test_is_on_line
+ test_is_on_line \
+ test_is_same_line
 
 TRASH= *~ *.o *.lst
 
