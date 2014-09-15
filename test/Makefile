@@ -16,7 +16,8 @@ EXE = \
  test_is_same_point \
  test_is_on_line \
  test_is_same_line \
- test_is_cross_line
+ test_is_cross_line \
+ test_cal_great_circle_center_rect
 
 TRASH= *~ *.o *.lst
 
