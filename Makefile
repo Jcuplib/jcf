@@ -10,6 +10,7 @@ clean realclean distclean:
 	$(MAKE) -C core $@
 	$(MAKE) -C app $@
 	$(MAKE) -C example $@
+	$(MAKE) -C test $@
 
 distclean: clean-bin
 
@@ -22,5 +23,7 @@ core:
 	$(MAKE) -C $@
 app example: install
 	$(MAKE) -C $@
+test: core
+	$(MAKE) -C $@
 
-.PHONY: core app example
+.PHONY: core app example test
