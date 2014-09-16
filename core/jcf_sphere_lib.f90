@@ -401,30 +401,21 @@ logical function is_in_latlon(lon1, lat1, lon2, lat2, tlon, tlat)
   real(kind=8), intent(IN) :: tlon !< latitude of tested point
   real(kind=8), intent(IN) :: tlat !< longitude of tested point
 
-  real(kind=8) :: lon1m, lon2m, tlonm
+  real(kind=8) :: lonZ
+  real(kind=8) :: l1, l2, lt
+  logical :: lon_inner, lat_inner
+  
+  lonZ=lon1
 
-  if (tlon==360.d0) then
-    tlonm = tlon
-  else
-     tlonm = mod(tlon+360.d0, 360.d0)
-  end if
+  l1=mod(lon1-lonZ,360.d0); if ( l1 < 0.d0 ) l1 = l1 + 360.d0
+  l2=mod(lon2-lonZ,360.d0); if ( l2 < 0.d0 ) l2 = l2 + 360.d0 
+  lt=mod(tlon-lonZ,360.d0); if ( lt < 0.d0 ) lt = lt + 360.d0
 
-  if (lon2==360.d0) then
-    lon2m = 360.d0
-  else
-    lon2m = mod(lon2+360.d0, 360.d0)
-  end if
+  lon_inner = ( l1 <= lt .and. lt < l2 )
+  lat_inner = ( lat1 <= tlat .and. tlat < lat2 )
 
-  lon1m = mod(lon1+360.d0, 360.d0)
- 
-  is_in_latlon = .false.
+  is_in_latlon = lon_inner .and. lat_inner
 
-  if (tlat < min(lat1, lat2)) return
-  if (tlat > max(lat1, lat2)) return
-  if (tlonm < min(lon1m, lon2m)) return
-  if (tlonm > max(lon1m, lon2m)) return
-
-  is_in_latlon = .true.
   
 end function is_in_latlon
 
@@ -633,9 +624,9 @@ subroutine xyz2latlon_double(x, y, z, lat, lon)
 
   if (y<0) lon = 360.d0-lon
 
-  if ( abs(x) < EPSLN ) then
-    write(33,*)'xyz2latlon_double:',x,y,z,lon,lat
-  end if
+!!$  if ( abs(x) < EPSLN ) then
+!!$    write(33,*)'xyz2latlon_double:',x,y,z,lon,lat
+!!$  end if
 
 end subroutine xyz2latlon_double
 
