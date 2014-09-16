@@ -11,12 +11,14 @@ program test_xyz2latlon
   real(dp_k) :: xd, yd, zd
   real(qp_k) :: xq, yq, zq
 
+  integer :: ios=0
 
   call init_sphere_lib()
 
   do 
     write(*,*)'input xq,yq,zq (Q for quit):'
-    read(*,*,err=999) xq,yq,zq
+    read(*,*,iostat=ios) xq,yq,zq
+    if ( ios .ne. 0 ) exit
     xd = real( xq,dp_k )
     yd = real( yq,dp_k )
     zd = real( zq,dp_k )
@@ -39,7 +41,7 @@ program test_xyz2latlon
     write(*,*)
   end do
 
-999 write(*,*)'done.'
+  write(*,*)'done.'
   call exit(0)
 
 

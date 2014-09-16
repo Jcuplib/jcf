@@ -8,11 +8,14 @@ program test_is_cross_line
   real(DP_K) :: lon,lat
   logical :: res
 
+  integer :: ios=0
+
   call init_sphere_lib()
 
   do
     write(*,'(A)')'input lon1,lat1,lon2,lat2,lon3,lat3,lon4,lat4'
-    read(*,*,err=999) lon1,lat1,lon2,lat2,lon3,lat3,lon4,lat4
+    read(*,*,iostat=ios) lon1,lat1,lon2,lat2,lon3,lat3,lon4,lat4
+    if ( ios .ne. 0 ) exit
     write(*,'(1x,4(F21.15,5x))')lon1,lat1,lon2,lat2
     write(*,'(1x,4(F21.15,5x))')lon3,lat3,lon4,lat4
     res=is_cross_line(lat1,lon1,lat2,lon2,lat3,lon3,lat4,lon4,lat,lon)
@@ -21,7 +24,7 @@ program test_is_cross_line
     write(*,*)
   end do
 
-999 write(*,*)'done.'
+  write(*,*)'done.'
   call exit(0)
 
 end program test_is_cross_line

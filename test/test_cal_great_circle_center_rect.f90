@@ -7,11 +7,14 @@ program test_cal_great_circle_center_rect
   real(DP_K) :: lon1,lat1,lon2,lat2,lon3,lat3,lon4,lat4
   real(DP_K) :: lon,lat
 
+  integer :: ios=0
+
   call init_sphere_lib()
 
   do
     write(*,'(A)')'input lon1,lat1,lon2,lat2,lon3,lat3,lon4,lat4:'
-    read(*,*,err=999) lon1,lat1,lon2,lat2,lon3,lat3,lon4,lat4
+    read(*,*,iostat=ios) lon1,lat1,lon2,lat2,lon3,lat3,lon4,lat4
+    if ( ios .ne. 0 ) exit
     write(*,'(1x,4(F21.15,5x))')lon1,lat1,lon2,lat2
     write(*,'(1x,4(F21.15,5x))')lon3,lat3,lon4,lat4
     call cal_great_circle_center_rect( &
@@ -22,7 +25,7 @@ program test_cal_great_circle_center_rect
     write(*,*)
   end do
 
-999 write(*,*)'done.'
+  write(*,*)'done.'
   call exit(0)
 
 end program test_cal_great_circle_center_rect
