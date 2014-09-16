@@ -10,10 +10,12 @@ program test_is_same_point
   call init_sphere_lib()
 
   do
-    write(*,'(A)',advance='NO')'input lon1,lat1,lon2,lat2:'
+    write(*,'(A)')'input lon1,lat1,lon2,lat2:'
     read(*,*,err=999) lon1,lat1,lon2,lat2
     write(*,'(1x,4(F21.15,5x))')lon1,lat1,lon2,lat2
-    write(*,*)'is_same_point:',is_same_point(lat1,lon1,lat2,lon2)
+    write(*,'(A,L2)')'is_same_point:',is_same_point(lat1,lon1,lat2,lon2)
+
+    write(*,*)
   end do
 
 999 write(*,*)'done.'

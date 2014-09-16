@@ -15,6 +15,8 @@ program test_is_same_point
     write(*,'(1x,4(F21.15,5x))')lon1,lat1,lon2,lat2
     write(*,'(1x,4(F21.15,5x))')lon3,lat3,lon4,lat4
     write(*,'(A,L2)')'is_same_line:',is_same_line(lat1,lon1,lat2,lon2,lat3,lon3,lat4,lon4)
+
+    write(*,*)
   end do
 
 999 write(*,*) 'done.'

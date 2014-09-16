@@ -16,6 +16,8 @@ program test_is_in_latlon
     write(*,'(1x,4(F21.15,5x))')lon1,lat1,lon2,lat2
     write(*,'(1x,2(F21.15,5x))')lon,lat
     write(*,'(A,L2)')'is_in_latlon:',is_in_latlon(lon1,lat1,lon2,lat2,lon,lat)
+
+    write(*,*)
   end do
 
 999 write(*,*) 'done.'

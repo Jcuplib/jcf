@@ -18,6 +18,8 @@ program test_cal_great_circle_center_rect
          & lat1,lon1,lat2,lon2,lat3,lon3,lat4,lon4, &
          & lat, lon )
     write(*,'(A,2(F21.15,5x))')'center point:',lon,lat
+
+    write(*,*)
   end do
 
 999 write(*,*)'done.'
