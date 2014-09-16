@@ -18,7 +18,8 @@ EXE = \
  test_is_same_line \
  test_is_cross_line \
  test_cal_great_circle_center_rect \
- test_is_in_latlon
+ test_is_in_latlon \
+ test_is_inner
 
 TRASH= *~ *.o *.lst
 
