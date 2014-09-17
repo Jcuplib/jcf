@@ -429,7 +429,10 @@ contains
   !!
   !! If given two lines does NOT intersect, return (999,999).
   !!
-  !! \note renamed from is_cross_line
+  !! \note renamed from is_cross_line.
+  !!
+  !! In comparison of alpha,beta with 1 and 0, EPS1,EPS2 are now quadruple precision,
+  !! So result may differ from former is_cross_line()
   !!
   subroutine get_intersection_point(&
        & lon, lat, &
