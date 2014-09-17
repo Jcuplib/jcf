@@ -675,31 +675,31 @@ contains
 
 
   !===================================================================================
-  !> Return .true. if given point(in lat-lon) is in the rectangle
+  !> Return .true. if given point(in (lon,lat)) is in the rectangle
   !! given pair of lon and lat.
   !!
-  !! Rewriten by T.Inoue 2014/08/20 from is_in_latlon
-  logical function is_in_lonlat(lon1, lat1, lon2, lat2, lont, latt)
+  !! Rewriten by T.Inoue 2014/08/20 from is_in_latlon()
+  logical function is_in_lonlat(lon1, lat1, lon2, lat2, lon, lat)
     implicit none
     real(kind=DP_K), intent(IN) :: lat1 !< latitude of point1 [deg]
     real(kind=DP_K), intent(IN) :: lon1 !< longitude of point1 [deg]
     real(kind=DP_K), intent(IN) :: lat2 !< latitude of point2 [deg]
     real(kind=DP_K), intent(IN) :: lon2 !< longitude of point2 [deg]
-    real(kind=DP_K), intent(IN) :: lont !< latitude of tested point [deg]
-    real(kind=DP_K), intent(IN) :: latt !< longitude of tested point [deg]
+    real(kind=DP_K), intent(IN) :: lon !< latitude of tested point [deg]
+    real(kind=DP_K), intent(IN) :: lat !< longitude of tested point [deg]
 
     real(kind=DP_K) :: lonZ
-    real(kind=DP_K) :: l1, l2, lt
+    real(kind=DP_K) :: l1, l2, ll
     logical :: lon_inner, lat_inner
 
     lonZ=lon1
 
-    l1=mod(lon1-lonZ,360.d0)
-    l2=mod(lon2-lonZ,360.d0)
-    lt=mod(lont-lonZ,360.d0)
+    l1=mod(lon1-lonZ,360.d0); if ( l1 < 0.d0 ) l1 = l1 + 360.d0
+    l2=mod(lon2-lonZ,360.d0); if ( l2 < 0.d0 ) l2 = l2 + 360.d0
+    ll=mod(lon -lonZ,360.d0); if ( ll < 0.d0 ) ll = ll + 360.d0
 
-    lon_inner = ( l1 <= lt .and. lt < l2 )
-    lat_inner = ( lat1 <= latt .and. latt < lat2 )
+    lon_inner = ( l1 <= ll .and. ll < l2 )
+    lat_inner = ( lat1 <= lat .and. lat < lat2 )
 
     is_in_lonlat = lon_inner .and. lat_inner
 
