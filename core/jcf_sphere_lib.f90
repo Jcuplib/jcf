@@ -94,7 +94,7 @@ contains
   end function cal_great_circle_triangle_area
 
   !===================================================================================
-  !> \deprecated Now call get_length_on_great_circle() (former get_length()).
+  !> \deprecated Now call get_length_on_great_circle()
   !!
   !!
   real(kind=DP_K) function cal_great_circle_dist(lat1, lon1, lat2, lon2)
@@ -102,7 +102,8 @@ contains
     real(kind=DP_K), intent(IN) :: lat1, lon1, lat2, lon2
 
     write(0,*)'calling cal_great_circle_dist, this is OBSOLETE!'
-    cal_great_circle_dist=get_length_on_great_circle(lon1/D2R, lat1/D2R, lon2/D2R, lat2/D2R)
+    cal_great_circle_dist=get_length_on_great_circle(&
+         & lon1/D2R, lat1/D2R, lon2/D2R, lat2/D2R)
 
   end function cal_great_circle_dist
 
@@ -116,7 +117,7 @@ contains
     real(kind=DP_K), intent(IN) :: lat2 !< latitude of point2
     real(kind=DP_K), intent(IN) :: lon2 !< longitude of point2
     write(0,*)'calling get_length, this is OBSOLETE!'
-    get_length=get_length_on_great_circle( lon1, lat1, lon2, lat2)
+    get_length=get_length_on_great_circle( lon1, lat1, lon2, lat2, normalize=.true.)
   end function get_length
 
   !===================================================================================
