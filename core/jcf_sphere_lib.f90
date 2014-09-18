@@ -188,11 +188,12 @@ contains
     real(kind=DP_K), intent(OUT),optional :: cross_lon !< longitude of cross point 
 
     real(kind=DP_K) :: lon, lat
+    logical :: do_intersect
 
     write(0,*)'calling is_cross_line, this is OBSOLETE!'
-    call get_intersection_point(lon, lat,&
+    call get_intersection_point(lon, lat, do_intersect, &
        & lon1, lat1, lon2, lat2, lon3, lat3, lon4, lat4) 
-    is_cross_line = .not. ( lon >= 999.d0 .or. lat >= 999.d0 )
+    is_cross_line = do_intersect
     if ( present(cross_lon) ) cross_lon=lon
     if ( present(cross_lat) ) cross_lat=lat
   end function is_cross_line
