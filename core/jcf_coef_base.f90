@@ -56,7 +56,8 @@ contains
 !> calculate interpolation coefficient on my_polygon
 !!
 subroutine cal_coefficient(my_polygon, is_check_coef)
-  use jcf_sphere_lib, only : cal_great_circle_area
+!!$  use jcf_sphere_lib, only : cal_great_circle_area
+  use jcf_spherical_lib, only : get_area_of_spherical_polygon
   use jcf_mesh_base, only : get_target_polygon_by_num, set_target_polygon_coef1_by_num, get_target_polygon_coef1_by_num
   implicit none
   type(polygon_type), intent(INOUT), pointer :: my_polygon !< pointer of my polygon
@@ -92,7 +93,8 @@ subroutine cal_coefficient(my_polygon, is_check_coef)
       point_x(i) = my_polygon%point(i)%ptr%x
       point_y(i) = my_polygon%point(i)%ptr%y
     end do
-    my_area = cal_great_circle_area(num_of_point, point_y, point_x)
+!!$    my_area = cal_great_circle_area(num_of_point, point_y, point_x)
+    my_area = get_area_of_spherical_polygon(num_of_point, point_x, point_y)
   end if
 
   !write(0,*) "cal_coefficent, my_area1 ", my_area
@@ -111,7 +113,8 @@ subroutine cal_coefficient(my_polygon, is_check_coef)
         point_x(j) = target_polygon%point(j)%ptr%x
         point_y(j) = target_polygon%point(j)%ptr%y
       end do
-      overlap_area = cal_great_circle_area(num_of_point, point_y, point_x)
+!!$      overlap_area = cal_great_circle_area(num_of_point, point_y, point_x)
+      overlap_area = get_area_of_spherical_polygon(num_of_point, point_x, point_y)
     else
       call cal_overlap_area(overlap_area, my_polygon, target_polygon)
     end if
@@ -159,7 +162,8 @@ end subroutine cal_coefficient
 !=======+=========+=========+=========+=========+=========+=========+=========+
 
 subroutine cal_coefficient_with_monte_carlo(my_polygon, is_check_coef, coef_cal_type, side_div_num)
-  use jcf_sphere_lib, only : cal_great_circle_area
+!!$  use jcf_sphere_lib, only : cal_great_circle_area
+  use jcf_spherical_lib, only: get_area_of_spherical_polygon
   use jcf_mesh_base, only : get_target_polygon_by_num, set_target_polygon_coef1_by_num, get_target_polygon_coef1_by_num
   implicit none
   type(polygon_type), pointer :: my_polygon !<
@@ -193,7 +197,8 @@ subroutine cal_coefficient_with_monte_carlo(my_polygon, is_check_coef, coef_cal_
       point_x(i) = my_polygon%point(i)%ptr%x
       point_y(i) = my_polygon%point(i)%ptr%y
     end do
-    my_area = cal_great_circle_area(num_of_point, point_y, point_x)
+!!$    my_area = cal_great_circle_area(num_of_point, point_y, point_x)
+    my_area = get_area_of_spherical_polygon( num_of_point, point_x, point_y )
   end if
 
   !write(0,*) "cal_coefficent, my_area1 ", my_area
@@ -215,7 +220,8 @@ subroutine cal_coefficient_with_monte_carlo(my_polygon, is_check_coef, coef_cal_
       if (is_monte_carlo) then
         overlap_area = side_div_num*side_div_num
       else
-        overlap_area = cal_great_circle_area(num_of_point, point_y, point_x)
+!!$        overlap_area = cal_great_circle_area(num_of_point, point_y, point_x)
+        overlap_area = get_area_of_spherical_polygon(num_of_point, point_x, point_y)
       end if
     else
       if (is_monte_carlo) then
@@ -280,7 +286,8 @@ end subroutine cal_coefficient_with_monte_carlo
 !=======+=========+=========+=========+=========+=========+=========+=========+
 !>
 subroutine cal_coefficient_with_mask(my_polygon, coef_cal_type, side_div_num)
-  use jcf_sphere_lib, only : cal_great_circle_area
+!!$  use jcf_sphere_lib, only : cal_great_circle_area
+  use jcf_spherical_lib, only : get_area_of_spherical_polygon
   use jcf_mesh_base, only : get_target_polygon_by_num, set_target_polygon_coef1_by_num, get_target_polygon_coef1_by_num
   implicit none
   type(polygon_type), pointer :: my_polygon !<
@@ -332,7 +339,8 @@ subroutine cal_coefficient_with_mask(my_polygon, coef_cal_type, side_div_num)
       if (trim(coef_cal_type) == "MONTE_CARLO") then
         overlap_area = side_div_num*side_div_num
       else
-        overlap_area = cal_great_circle_area(num_of_point, point_y, point_x)
+!!$        overlap_area = cal_great_circle_area(num_of_point, point_y, point_x)
+        overlap_area = get_area_of_spherical_polygon( num_of_point, point_x, point_y )
       end if
     else
       if (trim(coef_cal_type) == "MONTE_CARLO") then
@@ -372,7 +380,8 @@ end subroutine cal_coefficient_with_mask
 !=======+=========+=========+=========+=========+=========+=========+=========+
 
 subroutine cal_coefficient_without_mask(my_polygon, coef_cal_type, side_div_num)
-  use jcf_sphere_lib, only : cal_great_circle_area
+!!$  use jcf_sphere_lib, only : cal_great_circle_area
+  use jcf_spherical_lib, only : get_area_of_spherical_polygon
   use jcf_mesh_base, only : get_target_polygon_by_num, set_target_polygon_coef1_by_num, get_target_polygon_coef1_by_num
    implicit none
   type(polygon_type), pointer :: my_polygon
@@ -402,7 +411,8 @@ subroutine cal_coefficient_without_mask(my_polygon, coef_cal_type, side_div_num)
     point_y(i) = my_polygon%point(i)%ptr%y
   end do
 
-  my_area = cal_great_circle_area(num_of_point, point_y, point_x)
+!!$  my_area = cal_great_circle_area(num_of_point, point_y, point_x)
+  my_area = get_area_of_spherical_polygon( num_of_point, point_x, point_y )
 
   write(0,*) "num of target polygon ", my_polygon%num_of_target
 
@@ -417,7 +427,8 @@ subroutine cal_coefficient_without_mask(my_polygon, coef_cal_type, side_div_num)
         point_x(j) = target_polygon%point(j)%ptr%x
         point_y(j) = target_polygon%point(j)%ptr%y
       end do
-      overlap_area = cal_great_circle_area(num_of_point, point_y, point_x)
+!!$      overlap_area = cal_great_circle_area(num_of_point, point_y, point_x)
+      overlap_area = get_area_of_spherical_polygon(num_of_point, point_x, point_y)
       overlap_area = 10*10
     else
       !call cal_overlap_area(overlap_area, my_polygon, target_polygon)
@@ -455,7 +466,8 @@ end subroutine cal_coefficient_without_mask
 !=======+=========+=========+=========+=========+=========+=========+=========+
 
 subroutine cal_overlap_area_monte_carlo(area, pa, pb, div_num)
-  use jcf_sphere_lib, only : is_inner
+!!$  use jcf_sphere_lib, only : is_inner
+  use jcf_spherical_lib, only : is_inner
   implicit none
   real(kind=8), intent(OUT) :: area
   type(polygon_type), pointer :: pa, pb
@@ -612,7 +624,8 @@ end subroutine cal_cross_line
 !=======+=========+=========+=========+=========+=========+=========+=========+
 
 subroutine cal_overlap_area(area, pa, pb)
-  use jcf_sphere_lib, only : is_same_point, cal_great_circle_area
+!!$  use jcf_sphere_lib, only : is_same_point, cal_great_circle_area
+  use jcf_spherical_lib, only : is_the_same_point, get_area_of_spherical_polygon
   implicit none
   real(kind=8), intent(OUT) :: area
   type(polygon_type), pointer :: pa, pb
@@ -766,7 +779,8 @@ subroutine cal_overlap_area(area, pa, pb)
 
 
 
-    if (is_same_point(ys, xs, yn, xn).and.point_counter > 3) exit ! if (next point == start point) exit
+!!$    if (is_same_point(ys, xs, yn, xn).and.point_counter > 3) exit ! if (next point == start point) exit
+    if (is_the_same_point(xs, ys, xn, yn).and.point_counter > 3) exit ! if (next point == start point) exit
 
     point_x(point_counter) = xn
     point_y(point_counter) = yn
@@ -797,7 +811,8 @@ subroutine cal_overlap_area(area, pa, pb)
   !do i1 = 1, point_counter-1
   !  write(0,*) point_y(i1), point_x(i1)
   !end do
-  area = cal_great_circle_area(point_counter-1, point_y, point_x)
+!!$  area = cal_great_circle_area(point_counter-1, point_y, point_x)
+  area = get_area_of_spherical_polygon(point_counter-1, point_x, point_y)
 
   !write(0,*) "cal_area ", area, point_counter-1
   !write(0,*)
@@ -832,7 +847,8 @@ end subroutine init_coef_var
 !=======+=========+=========+=========+=========+=========+=========+=========+
 
 subroutine check_singularity(ca, cb)
-  use jcf_sphere_lib, only : is_on_line
+!!$  use jcf_sphere_lib, only : is_on_line
+  use jcf_spherical_lib, only : is_on_the_line
   implicit none
   type(coef_type), intent(INOUT) :: ca
   type(coef_type), intent(IN)    :: cb
@@ -843,7 +859,8 @@ subroutine check_singularity(ca, cb)
       ca%is_inner(i) = .true.
     end if
     bloop: do j = 1, cb%num_of_point
-      if (is_on_line(cb%y(j), cb%x(j), cb%y(j+1), cb%x(j+1), ca%y(i), ca%x(i))) then
+!!$      if (is_on_line(cb%y(j), cb%x(j), cb%y(j+1), cb%x(j+1), ca%y(i), ca%x(i))) then
+      if (is_on_the_line(cb%x(j), cb%y(j), cb%x(j+1), cb%y(j+1), ca%x(i), ca%y(i))) then
         ca%is_inner(i) = .true.
         ca%have_singular_point = .true.
         ca%side_index(i) = j
@@ -965,11 +982,12 @@ end subroutine check_overlap_line
 !=======+=========+=========+=========+=========+=========+=========+=========+
 
 subroutine check_validity_by_cross_line(ca, cb)
-  use jcf_sphere_lib, only : is_cross_line
+!!$  use jcf_sphere_lib, only : is_cross_line
+  use jcf_spherical_lib, only : is_intersecting_lines
   implicit none
   type(coef_type), intent(INOUT) :: ca
   type(coef_type), intent(IN)    :: cb
-  real(kind=8) :: xc, yc
+!!$  real(kind=8) :: xc, yc
   integer :: i, j
 
   aloop: do i = 1, ca%num_of_point
@@ -979,8 +997,10 @@ subroutine check_validity_by_cross_line(ca, cb)
     bloop: do j = 1, cb%num_of_point
       if (ca%side_index(i) == j) cycle ! skip online side
       if (ca%side_index(i+1) == j) cycle ! skip online side
-      if (is_cross_line(ca%y(i), ca%x(i), ca%y(i+1), ca%x(i+1), &
-                        cb%y(j), cb%x(j), cb%y(j+1), cb%x(j+1), yc, xc)) then
+!!$      if (is_cross_line(ca%y(i), ca%x(i), ca%y(i+1), ca%x(i+1), &
+!!$                        cb%y(j), cb%x(j), cb%y(j+1), cb%x(j+1), yc, xc)) then
+      if (is_intersecting_lines(ca%x(i), ca%y(i), ca%x(i+1), ca%y(i+1),&
+           &                    cb%x(j), cb%y(j), cb%x(j+1), cb%y(j+1))) then
         ca%is_valid(i) = .true.
         ca%is_checked(i) = .true.
         exit bloop
@@ -1084,7 +1104,8 @@ end subroutine cal_start_point
 !=======+=========+=========+=========+=========+=========+=========+=========+
 
 subroutine cal_nearest_cross_point(xs, ys, xe, ye, my_index, xn, yn, c, skip_point, is_start, polygon_point_index)
-  use jcf_sphere_lib, only : is_same_point, is_cross_line, get_length
+!!$  use jcf_sphere_lib, only : is_same_point, is_cross_line, get_length
+  use jcf_spherical_lib, only : is_the_same_point, is_intersecting_lines, get_length_on_great_circle
   implicit none
   real(kind=8), intent(IN) :: xs, ys, xe, ye 
   integer, intent(IN) :: my_index
@@ -1111,7 +1132,8 @@ subroutine cal_nearest_cross_point(xs, ys, xe, ye, my_index, xn, yn, c, skip_poi
     !    /i1
     ! ------- my_line
     if (my_index == c%side_index(i1)) then
-      current_length = get_length(ys, xs, c%y(i1), c%x(i1))
+!!$      current_length =  get_length(ys, xs, yc, xc)     
+      current_length = get_length_on_great_circle(xs, ys, c%x(i1), c%y(i1), normalize=.true.)
       if (current_length <= min_length) then
         min_length = current_length
         polygon_point_index = i1
@@ -1131,8 +1153,10 @@ subroutine cal_nearest_cross_point(xs, ys, xe, ye, my_index, xn, yn, c, skip_poi
     !write(0,*) is_cross_line(ys, xs, ye, xe, y1, x1, y2, x2, yc, xc)
     !write(0,*)
   
-    if (is_cross_line(ys, xs, ye, xe, y1, x1, y2, x2, yc, xc)) then
-      current_length =  get_length(ys, xs, yc, xc)     
+!!$    if (is_cross_line(ys, xs, ye, xe, y1, x1, y2, x2, yc, xc)) then
+    if (is_intersecting_lines(xs, ys, xe, ye, x1, y1, x2, y2)) then
+!!$      current_length =  get_length(ys, xs, yc, xc)     
+      current_length =  get_length_on_great_circle(xs, ys, yc, xc, normalize=.true.)     
       !write(0,*) "length ", current_length, min_length
       !write(0,*) xs, ys, xe, ye
       !write(0,*) x1, y1, x2, y2
@@ -1156,7 +1180,8 @@ end subroutine cal_nearest_cross_point
 !=======+=========+=========+=========+=========+=========+=========+=========+
 
 subroutine search_overlap_line(xs, ys, xe, ye, polygon, polygon_point_index)
-  use jcf_sphere_lib, only : is_same_line, is_cross_line, get_length
+!!$  use jcf_sphere_lib, only : is_same_line, is_cross_line, get_length
+  use jcf_spherical_lib, only : is_the_same_line, is_intersecting_lines, get_length_on_great_circle
   implicit none
   real(kind=8), intent(IN) :: xs, ys, xe, ye 
   type(polygon_type), pointer :: polygon
@@ -1172,7 +1197,8 @@ subroutine search_overlap_line(xs, ys, xe, ye, polygon, polygon_point_index)
     y1 = polygon%point(i1)%ptr%y
     x2 = polygon%point(i2)%ptr%x
     y2 = polygon%point(i2)%ptr%y
-    if (is_same_line(ys, xs, ye, xe, y1, x1, y2, x2)) then
+!!$    if (is_same_line(ys, xs, ye, xe, y1, x1, y2, x2)) then
+    if (is_the_same_line(xs, ys, xe, ye, x1, y1, x2, y2)) then
       if (((min(ys,ye) <= y1).and.(y1 <= max(ys,ye))).or. &
        ((min(ys,ye) <= y2).and.(y2 <= max(ys,ye)))) then
         polygon_point_index = i1
@@ -1186,12 +1212,13 @@ end subroutine search_overlap_line
 !=======+=========+=========+=========+=========+=========+=========+=========+
 
 logical function check_cross_line(xs, ys, xe, ye, polygon, skip_point)
-  use jcf_sphere_lib, only : is_cross_line
+!!$  use jcf_sphere_lib, only : is_cross_line
+  use jcf_spherical_lib, only : is_intersecting_lines
   implicit none
   real(kind=8), intent(IN) :: xs, ys, xe, ye
   type(polygon_type), pointer :: polygon
   integer, intent(IN) :: skip_point
-  real(kind=8) :: x1, y1, x2, y2, xc, yc
+  real(kind=8) :: x1, y1, x2, y2
   integer :: i1, i2
 
   !write(0,*) "check_cross_line ", xs, ys, xe, ye, skip_point
@@ -1204,7 +1231,8 @@ logical function check_cross_line(xs, ys, xe, ye, polygon, skip_point)
     x2 = polygon%point(i2)%ptr%x
     y2 = polygon%point(i2)%ptr%y
 
-    if (is_cross_line(ys, xs, ye, xe, y1, x1, y2, x2, yc, xc)) then
+!!$    if (is_cross_line(ys, xs, ye, xe, y1, x1, y2, x2, yc, xc)) then
+    if (is_intersecting_lines(xs, ys, xe, ye, x1, y1, x2, y2)) then
       !write(0,*) "check_cross_line true ", i1
       check_cross_line = .true.
       return
