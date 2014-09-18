@@ -14,7 +14,6 @@
 !!   - 2014/08/29 T.Inoue    Refactored.
 !!   .
 !!
-#define DEBUG
 module jcf_sphere_lib
   use jcf_spherical_lib
   implicit none
