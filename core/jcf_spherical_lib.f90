@@ -435,11 +435,12 @@ contains
   !! So result may differ from former is_cross_line()
   !!
   subroutine get_intersection_point(&
-       & lon, lat, &
+       & lon, lat, do_intersect, &
        & lon1, lat1, lon2, lat2, lon3, lat3, lon4, lat4) 
     implicit none
     real(kind=DP_K), intent(OUT) :: lat !< latitude of cross point [deg]
     real(kind=DP_K), intent(OUT) :: lon !< longitude of cross point [deg]
+    logical,         intent(OUT) :: do_intersect !< .true. if intersecting.
     real(kind=DP_K), intent(IN) :: lon1 !< longitude of point1 [deg]
     real(kind=DP_K), intent(IN) :: lat1 !< latitude of point1 [deg]
     real(kind=DP_K), intent(IN) :: lon2 !< longitude of point2 [deg]
@@ -464,6 +465,7 @@ contains
 
     lon=999.d0
     lat=999.d0
+    do_intersect = .false.
 !!$    if ((1.0d0+EPS1 >= dble(alpha)).and.(dble(alpha) >= -EPS2)) then
 !!$      if ((1.0d0+EP1 >= dble(beta)).and.(dble(beta) >= -EPS2)) then
     if ((EPS1 >= (alpha-1.0_QP_K)).and.(alpha >= -EPS2)) then
@@ -476,6 +478,7 @@ contains
           y = y/length
           z = z/length
           call xyz2lonlat(x,y,z,lon,lat)
+          do_intersect=.true.
       end if
     end if
 
