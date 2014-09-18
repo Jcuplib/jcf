@@ -696,7 +696,6 @@ subroutine search_polygon(this_polygon, start_polygon, lat_lon_latitude)
   integer :: target_length
   integer :: before_index
   integer :: p, pp
-  integer :: ii, jj, ll
 
       do p = 1, this_polygon%num_of_point   
  
@@ -783,7 +782,6 @@ subroutine search_polygon_by_side(this_polygon)
   real(kind=8) :: delta_x, delta_y 
   integer :: search_count
   integer :: p, ps, pe
-  integer :: ii, jj, ll
 
 
       ploop: do p = 1, this_polygon%num_of_point   
@@ -899,8 +897,8 @@ recursive subroutine search_polygon_from_point(mx, my, p_num, polygons, target_p
   integer :: next_p_num
   type(polygon_ptr_type), pointer :: next_polygons(:)
   integer :: i, j
-  integer :: idx
-  integer :: ii,jj,ll
+  !integer :: idx
+  !integer :: ii,jj,ll
 
   if (level>1550) then
   !if (level>5) then
@@ -1145,13 +1143,16 @@ end subroutine set_target_polygon_coef1_by_num
 
 !=======+=========+=========+=========+=========+=========+=========+=========+
 !> get coefficient of target polygon
-real(kind=8) function get_target_polygon_coef1_by_num(my_polygon, target_polygon_num) 
+function get_target_polygon_coef1_by_num(my_polygon, target_polygon_num) result(res)
   implicit none
   type(polygon_type), pointer :: my_polygon !< my polygon
   integer, intent(IN) :: target_polygon_num !< target polygon number
 
+  real(kind=8) :: res
   type(target_polygon_type), pointer :: current_target
   integer :: counter
+  
+  res=0.d0
 
   if (my_polygon%num_of_target < target_polygon_num) return
 
@@ -1160,7 +1161,7 @@ real(kind=8) function get_target_polygon_coef1_by_num(my_polygon, target_polygon
   do while(associated(current_target))
     counter = counter + 1
     if (counter == target_polygon_num) then
-      get_target_polygon_coef1_by_num = current_target%coef1
+      res = current_target%coef1
       return
     end if
     current_target => current_target%next
@@ -1191,17 +1192,20 @@ end subroutine set_target_polygon_coef1_by_index
 
 !=======+=========+=========+=========+=========+=========+=========+=========+
 !> get coefficient of target polygon
-real(kind=8) function get_target_polygon_coef1_by_index(my_polygon, target_polygon_index) 
+function get_target_polygon_coef1_by_index(my_polygon, target_polygon_index) result(res)
   implicit none
   type(polygon_type), pointer :: my_polygon   !< my polygon
   integer, intent(IN) :: target_polygon_index !< index of target polygon
 
+  real(kind=8) :: res
   type(target_polygon_type), pointer :: current_target
+
+  res = 0.d0
 
   current_target => my_polygon%target_polygon
   do while(associated(current_target))
     if (current_target%target%index == target_polygon_index) then
-      get_target_polygon_coef1_by_index = current_target%coef1
+      res = current_target%coef1
       return
     end if
     current_target => current_target%next
@@ -1237,13 +1241,16 @@ end subroutine set_target_polygon_coef2_by_num
 
 !=======+=========+=========+=========+=========+=========+=========+=========+
 !> get coefficient of target polygon
-real(kind=8) function get_target_polygon_coef2_by_num(my_polygon, target_polygon_num) 
+function get_target_polygon_coef2_by_num(my_polygon, target_polygon_num) result (res)
   implicit none
   type(polygon_type), pointer :: my_polygon !< my polygon
   integer, intent(IN) :: target_polygon_num !< target polygon number
 
+  real(kind=8) :: res
   type(target_polygon_type), pointer :: current_target
   integer :: counter
+
+  res = 0.d0
 
   if (my_polygon%num_of_target < target_polygon_num) return
 
@@ -1252,7 +1259,7 @@ real(kind=8) function get_target_polygon_coef2_by_num(my_polygon, target_polygon
   do while(associated(current_target))
     counter = counter + 1
     if (counter == target_polygon_num) then
-      get_target_polygon_coef2_by_num = current_target%coef2
+      res = current_target%coef2
       return
     end if
     current_target => current_target%next
@@ -1283,17 +1290,20 @@ end subroutine set_target_polygon_coef2_by_index
 
 !=======+=========+=========+=========+=========+=========+=========+=========+
 !> get coefficient of target polygon
-real(kind=8) function get_target_polygon_coef2_by_index(my_polygon, target_polygon_index) 
+function get_target_polygon_coef2_by_index(my_polygon, target_polygon_index) result(res)
   implicit none
   type(polygon_type), pointer :: my_polygon   !< my polygon
   integer, intent(IN) :: target_polygon_index !< index of target polygon
 
+  real(kind=8) :: res
   type(target_polygon_type), pointer :: current_target
+
+  res=0.d0
 
   current_target => my_polygon%target_polygon
   do while(associated(current_target))
     if (current_target%target%index == target_polygon_index) then
-      get_target_polygon_coef2_by_index = current_target%coef2
+      res = current_target%coef2
       return
     end if
     current_target => current_target%next
