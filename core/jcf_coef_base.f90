@@ -388,7 +388,7 @@ subroutine cal_coefficient_without_mask(my_polygon, coef_cal_type, side_div_num)
   character(len=*), intent(IN) :: coef_cal_type
   integer, intent(IN) :: side_div_num  
   type(polygon_type), pointer :: target_polygon
-  real(kind=8) :: my_area
+!!$  real(kind=8) :: my_area
   real(kind=8) :: overlap_area, overlap_sum
   real(kind=8) :: point_x(MAX_POINT), point_y(MAX_POINT)
   real(kind=8) :: temp_coef
@@ -412,7 +412,7 @@ subroutine cal_coefficient_without_mask(my_polygon, coef_cal_type, side_div_num)
   end do
 
 !!$  my_area = cal_great_circle_area(num_of_point, point_y, point_x)
-  my_area = get_area_of_spherical_polygon( num_of_point, point_x, point_y )
+!!$  my_area = get_area_of_spherical_polygon( num_of_point, point_x, point_y )
 
   write(0,*) "num of target polygon ", my_polygon%num_of_target
 
