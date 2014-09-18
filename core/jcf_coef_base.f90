@@ -76,6 +76,7 @@ subroutine cal_coefficient(my_polygon, is_check_coef)
       write(0,*) "cal_coefficient num_of_target error "
       stop
     end if
+    target_polygon => get_target_polygon_by_num(my_polygon, 1)
     if (target_polygon%mask) then
       call set_target_polygon_coef1_by_num(my_polygon, 1, 1.d0)
     else
@@ -286,7 +287,7 @@ subroutine cal_coefficient_with_mask(my_polygon, coef_cal_type, side_div_num)
   character(len=*), intent(IN) :: coef_cal_type !<
   integer, intent(IN) :: side_div_num           !<
   type(polygon_type), pointer :: target_polygon
-  real(kind=8) :: my_area
+  !real(kind=8) :: my_area
   real(kind=8) :: overlap_area, overlap_sum
   real(kind=8) :: point_x(MAX_POINT), point_y(MAX_POINT)
   real(kind=8) :: temp_coef
@@ -378,7 +379,7 @@ subroutine cal_coefficient_without_mask(my_polygon, coef_cal_type, side_div_num)
   character(len=*), intent(IN) :: coef_cal_type
   integer, intent(IN) :: side_div_num  
   type(polygon_type), pointer :: target_polygon
-  real(kind=8) :: my_area, filarea
+  real(kind=8) :: my_area
   real(kind=8) :: overlap_area, overlap_sum
   real(kind=8) :: point_x(MAX_POINT), point_y(MAX_POINT)
   real(kind=8) :: temp_coef
@@ -461,12 +462,10 @@ subroutine cal_overlap_area_monte_carlo(area, pa, pb, div_num)
   integer, intent(IN) :: div_num
   real(kind=8) :: point_pos_x, point_pos_y
   integer :: i, j, p
-  real(kind=8) :: lat_diff, lon_diff
   type(polygon_type), pointer :: rect_polygon, target_polygon
   real(kind=8), dimension(div_num+1) :: x12, x23, x43, x14, y12, y23, y43, y14
   real(kind=8) :: x_pos(4), y_pos(4), x1, y1, x2, y2, x3, y3
   real(kind=8) :: px1, px2, px3, px4, py1, py2, py3, py4
-  real(kind=8) :: x_diff, y_diff
 
   ! set rectangular polygon
   if (pa%num_of_point == 4) then ! rectangular polygon
@@ -621,7 +620,7 @@ subroutine cal_overlap_area(area, pa, pb)
   type(coef_type), pointer :: target_polygon, my_polygon, temp_polygon
   integer :: current_index, skip_index, next_index
   integer :: my_start_index, target_start_index
-  real(kind=8) :: xa1, ya1, xa2, ya2, xb1, by1, xb2, yb2
+  real(kind=8) :: xa1, ya1, xa2, ya2
   real(kind=8) :: point_x(MAX_POINT), point_y(MAX_POINT)
   real(kind=8) :: xs, ys, xn, yn
   integer :: point_counter
@@ -863,7 +862,7 @@ end subroutine check_singularity
 subroutine select_valid_side(ca, cb)
   implicit none
   type(coef_type), intent(INOUT) :: ca, cb
-  integer :: i
+  !integer :: i
 
   call check_both_point_in(ca)
   call check_both_point_in(cb)
@@ -1000,8 +999,9 @@ subroutine cal_start_point_no_singularity(ca, cb, xs, ys, my_point_index, target
   integer, intent(OUT) :: my_point_index, target_point_index
   real(kind=8) :: xa1, ya1, xa2, ya2
   type(coef_type), pointer :: c_ptr
-  integer :: target_polygon_index
-  integer :: i1, i2
+  !integer :: target_polygon_index
+  integer :: i1
+  !integer :: i2
 
   c_ptr => cb
 
@@ -1043,8 +1043,9 @@ subroutine cal_start_point(ca, cb, xs, ys, my_point_index, target_point_index)
   integer, intent(OUT) :: my_point_index, target_point_index
   real(kind=8) :: xa1, ya1, xa2, ya2
   type(coef_type), pointer :: c_ptr
-  integer :: target_polygon_index
-  integer :: i1, i2
+  !integer :: target_polygon_index
+  integer :: i1
+  !integer :: i2
 
 
   c_ptr => cb
