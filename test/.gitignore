@@ -1,2 +1,3 @@
 /test_*
 !/test_*\.f90
+/output_*
