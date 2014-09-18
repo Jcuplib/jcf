@@ -20,8 +20,8 @@
 !! \code
 !!  type(mesh_type) :: mesh1, mesh2
 !!   
-!!  ! initialize jcf_sphere_lib
-!!  call init_shere_lib() 
+!!  ! initialize jcf_spherical_lib
+!!  call init_sherical_lib() 
 !!    
 !!  ! set number of polygon, number of center point, number of vertexes
 !!   call init_mesh(mesh1, NX1*NY1, NX1*NY1, (NX1+1)*(NY1+1)) 
@@ -850,7 +850,7 @@ end subroutine search_polygon_by_side
 !=======+=========+=========+=========+=========+=========+=========+=========+
 
 subroutine search_next_polygon(xs, ys, xe, ye, x, y, current_polygon, next_polygon)
-  use jcf_sphere_lib, only : is_cross_line
+  use jcf_spherical_lib, only : get_intersection_point
   implicit none
   real(kind=8), intent(IN) :: xs, ys, xe, ye
   real(kind=8), intent(OUT) :: x, y
@@ -858,6 +858,7 @@ subroutine search_next_polygon(xs, ys, xe, ye, x, y, current_polygon, next_polyg
   type(polygon_type), pointer :: next_polygon
   real(kind=8) :: x1, y1, x2, y2
   integer :: i1, i2
+  logical :: do_intersect
 
   do i1 = 1, current_polygon%num_of_point
     i2 = mod(i1, current_polygon%num_of_point) + 1
@@ -865,7 +866,11 @@ subroutine search_next_polygon(xs, ys, xe, ye, x, y, current_polygon, next_polyg
     y1 = current_polygon%point(i1)%ptr%y
     x2 = current_polygon%point(i2)%ptr%x
     y2 = current_polygon%point(i2)%ptr%y
-    if (is_cross_line(ys, xs, ye, xe, y1, x1, y2, x2, y, x)) then
+!!$    if (is_cross_line(ys, xs, ye, xe, y1, x1, y2, x2, y, x)) then
+    call get_intersection_point(&
+         &  x, y, do_intersect,&
+         & xs,ys,xe,ye,x1,y1,x2,y2 )
+    if ( do_intersect ) then
       next_polygon => current_polygon%next_polygon(i1)%ptr
       return
     end if
@@ -983,7 +988,7 @@ end subroutine search_polygon_from_point
 !=======+=========+=========+=========+=========+=========+=========+=========+
 
 logical function is_in_this_polygon(x, y, polygon, is_lat_lon)
-  use jcf_sphere_lib, only : is_inner
+  use jcf_spherical_lib, only : is_inner
   implicit none
   real(kind=8), intent(IN) :: x, y
   type(polygon_type), intent(IN) :: polygon
