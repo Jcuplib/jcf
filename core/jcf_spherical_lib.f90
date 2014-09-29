@@ -733,10 +733,10 @@ contains
 
     res = .false.
 
-    call lonlat2xyz(lat1, lon1, x1, y1, z1)
-    call lonlat2xyz(lat2, lon2, x2, y2, z2)
-    call lonlat2xyz(lat3, lon3, x3, y3, z3)
-    call lonlat2xyz(lat,  lon,  x,  y,  z )
+    call lonlat2xyz(lon1, lat1, x1, y1, z1)
+    call lonlat2xyz(lon2, lat2, x2, y2, z2)
+    call lonlat2xyz(lon3, lat3, x3, y3, z3)
+    call lonlat2xyz(lon,  lat,  x,  y,  z )
 
 !!$    detA = x1*y2*z3+x3*y1*z2+x2*y3*z1-x3*y2*z1-x1*y3*z2-x2*y1*z3
     detA = sign(1.d0,&
