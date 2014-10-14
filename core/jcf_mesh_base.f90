@@ -214,6 +214,7 @@ module jcf_mesh_base
   public :: write_monitor_info
   public :: write_polygon_info
 
+  public :: is_in_this_polygon
 
   private :: point_type
   private :: point_ptr_type
@@ -221,9 +222,7 @@ module jcf_mesh_base
   private :: monte_carlo_point_type
   private :: monitor_type
 
-  private :: search_next_polygon
   private :: search_polygon_from_point
-  private :: is_in_this_polygon
   private :: add_target_polygon
   private :: check_mask_correspondence
   private :: check_polygon_mask
@@ -293,6 +292,8 @@ module jcf_mesh_base
     !integer :: num_of_monte_carlo_point
     !type(monte_carlo_point_type), pointer :: monte_carlo_point(:)
     logical :: is_included !< flag whether this polygon is included in the target polygon
+    logical :: including_np
+    logical :: including_sp
   end type polygon_type
 
   type(polygon_type), private, pointer :: current_polygon
@@ -416,6 +417,10 @@ subroutine init_polygon(this, polygon_index, num_of_point)
   current_polygon%max_xp = -99999999.d0
   current_polygon%min_yp = 99999999.d0
   current_polygon%max_yp = -99999999.d0
+
+  current_polygon%including_np = .false.
+  current_polygon%including_np = .false.
+
 
 end subroutine init_polygon
 
@@ -782,7 +787,9 @@ subroutine search_polygon_by_side(this_polygon)
   real(kind=8) :: delta_x, delta_y 
   integer :: search_count
   integer :: p, ps, pe
+  real(kind=8),parameter :: division = 1000.d0
 
+!!$    write(0,*)'search_polygon_by_side:this_polygon%index:',this_polygon%index
 
       ploop: do p = 1, this_polygon%num_of_point   
 
@@ -795,16 +802,16 @@ subroutine search_polygon_by_side(this_polygon)
         ye = this_polygon%point(pe)%ptr%y
 
         if (abs(xe-xs) < 180.d0) then
-          delta_x = (xe-xs)/100.d0
+          delta_x = (xe-xs)/division
         else
           if (xs>=xe) then
-            delta_x = (xe-xs+360.d0)/100.d0
+            delta_x = (xe-xs+360.d0)/division
           else
-            delta_x = (xe-xs-360.d0)/100.d0
+            delta_x = (xe-xs-360.d0)/division
           end if
         end if
 
-        delta_y = (ye-ys)/100.d0
+        delta_y = (ye-ys)/division
 
        current_polygon => this_polygon%point(p)%ptr%target_polygon
        if (.not.associated(current_polygon)) cycle ! next ploop
@@ -817,6 +824,10 @@ subroutine search_polygon_by_side(this_polygon)
 
        search_count = 0
 
+!!$    write(0,*)'search_polygon_by_side:p:',p
+!!$    write(0,*)'search_polygon_by_side:xs,ys:',xs,ys
+!!$    write(0,*)'search_polygon_by_side:xs,ys:',xe,ye
+
        searchloop: do 
 
          search_count = search_count + 1
@@ -824,6 +835,8 @@ subroutine search_polygon_by_side(this_polygon)
            write(0,*) "seach_polygon_by_side, search count overflow ", this_polygon%index, p
            stop
          end if
+
+!!$         write(0,*)'search_polygon_by_side:search_count:',search_count
 
          call search_next_polygon(xs, ys, xe, ye, x, y, current_polygon, next_polygon)
          if (.not.associated(next_polygon)) exit searchloop
@@ -843,43 +856,47 @@ subroutine search_polygon_by_side(this_polygon)
 
       end do ploop
 
+contains
+  !=======+=========+=========+=========+=========+=========+=========+=========+
+
+  subroutine search_next_polygon(xs, ys, xe, ye, x, y, current_polygon, next_polygon)
+    use jcf_spherical_lib, only : get_intersection_point
+    implicit none
+    real(kind=8), intent(IN) :: xs, ys, xe, ye
+    real(kind=8), intent(OUT) :: x, y
+    type(polygon_type), pointer :: current_polygon
+    type(polygon_type), pointer :: next_polygon
+    real(kind=8) :: x1, y1, x2, y2
+    integer :: i1, i2
+    logical :: do_intersect
+
+    do i1 = 1, current_polygon%num_of_point
+      i2 = mod(i1, current_polygon%num_of_point) + 1
+      x1 = current_polygon%point(i1)%ptr%x
+      y1 = current_polygon%point(i1)%ptr%y
+      x2 = current_polygon%point(i2)%ptr%x
+      y2 = current_polygon%point(i2)%ptr%y
+      call get_intersection_point(&
+           &  x, y, do_intersect,&
+           & xs,ys,xe,ye,x1,y1,x2,y2 )
+!!$        write(0,*)'search_next_polygon:'
+!!$        write(0,*)'  i1,i2',i1,i2
+!!$        write(0,*)'  do_intersect:',do_intersect
+!!$        write(0,*)'  xs,ys,xe,ye',xs,ys,xe,ye
+!!$        write(0,*)'  x1,y1,x2,y2',x1,y1,x2,y2
+!!$        write(0,*)'  x, y ',x,y
+      if ( do_intersect ) then
+        next_polygon => current_polygon%next_polygon(i1)%ptr
+        return
+      end if
+    end do
+
+    nullify(next_polygon)
+    x = 9999.d0
+    y = 9999.d0
+
+  end subroutine search_next_polygon
 end subroutine search_polygon_by_side
-
-!=======+=========+=========+=========+=========+=========+=========+=========+
-
-subroutine search_next_polygon(xs, ys, xe, ye, x, y, current_polygon, next_polygon)
-  use jcf_spherical_lib, only : get_intersection_point
-  implicit none
-  real(kind=8), intent(IN) :: xs, ys, xe, ye
-  real(kind=8), intent(OUT) :: x, y
-  type(polygon_type), pointer :: current_polygon
-  type(polygon_type), pointer :: next_polygon
-  real(kind=8) :: x1, y1, x2, y2
-  integer :: i1, i2
-  logical :: do_intersect
-
-  do i1 = 1, current_polygon%num_of_point
-    i2 = mod(i1, current_polygon%num_of_point) + 1
-    x1 = current_polygon%point(i1)%ptr%x
-    y1 = current_polygon%point(i1)%ptr%y
-    x2 = current_polygon%point(i2)%ptr%x
-    y2 = current_polygon%point(i2)%ptr%y
-!!$    if (is_cross_line(ys, xs, ye, xe, y1, x1, y2, x2, y, x)) then
-    call get_intersection_point(&
-         &  x, y, do_intersect,&
-         & xs,ys,xe,ye,x1,y1,x2,y2 )
-    if ( do_intersect ) then
-      next_polygon => current_polygon%next_polygon(i1)%ptr
-      return
-    end if
-  end do
-
-  nullify(next_polygon)
-  x = 9999.d0
-  y = 9999.d0
-
-end subroutine search_next_polygon
-
 !=======+=========+=========+=========+=========+=========+=========+=========+
 
 recursive subroutine search_polygon_from_point(mx, my, p_num, polygons, target_polygon, level, &
