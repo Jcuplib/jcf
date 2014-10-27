@@ -19,7 +19,9 @@ EXE = \
  test_is_cross_line \
  test_cal_great_circle_center_rect \
  test_is_in_latlon \
- test_is_inner
+ test_is_inner \
+ test_mtf_open_close \
+ test_mtf_read_write
 
 TRASH= *~ *.o *.lst
 
