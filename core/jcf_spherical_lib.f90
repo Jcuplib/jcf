@@ -702,10 +702,16 @@ contains
     ll=mod(lon -lonZ,360.d0); if ( ll < 0.d0 ) ll = ll + 360.d0
 
     lon_inner = ( l1 <= ll .and. ll < l2 )
-    lat_inner = ( lat1 <= lat .and. lat < lat2 )
+    lat_inner = ( min(lat1,lat2) <= lat .and. lat < max(lat1,lat2) )
 
     is_in_lonlat = lon_inner .and. lat_inner
 
+!!$    write(0,*)'dbg:is_in_lonlat:'
+!!$    write(0,*)'l1,l2,ll:',l1,l2,ll
+!!$    write(0,*)'lon_inner:',lon_inner
+!!$    write(0,*)'lat1,lat2,lat',lat1,lat2,lat
+!!$    write(0,*)'min(lat1,lat2) <= lat, lat < max(lat1,lat2):',min(lat1,lat2) <= lat, lat < max(lat1,lat2)
+!!$    write(0,*)'lat_innner:',lat_inner
   end function is_in_lonlat
 
 
