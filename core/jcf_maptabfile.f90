@@ -313,7 +313,6 @@ contains
     end if
 
     self%istat = 0
-    self%nrec  = nrec
     self%irec  = 0
 
     if ( present( crecv ) ) crecv = self%crecv
