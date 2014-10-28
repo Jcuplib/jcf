@@ -30,10 +30,7 @@ program test_mtf_read_write
 
   allocate(mtab(nrec))
   do n =1, nrec
-    mtab(n)%ridx = 1
-    mtab(n)%sidx = 1
-    mtab(n)%coef(1) = 1.d0
-    mtab(n)%coef(2) = fmiss
+    call jcf_mtab_set(mtab(n),ridx=1,sidx=1,coef=(/1.d0,fmiss/))
   end do
 
   write(*,*)'##### Write mapping table #####'
@@ -51,7 +48,7 @@ program test_mtf_read_write
        & nrec=nrec    )
   write(*,*)'Status after write_head:',mtf%istat
 
-  call jcf_mtf_write_whole_records(mtf, mtab, nrec=nrec)
+  call jcf_mtf_write_whole_records(mtf, mtab)
 
   call jcf_mtf_close(mtf)
   deallocate(mtab)
@@ -77,7 +74,7 @@ program test_mtf_read_write
 
   allocate(mtab(nn))
 
-  call jcf_mtf_read_whole_records(mtf,mtab,nn)
+  call jcf_mtf_read_whole_records(mtf,mtab)
 
   write(*,*)'Read records:'
   do n=1,nn
