@@ -37,6 +37,7 @@ module jcf_maptabfile
   public :: maptab_t
 
   public :: jcf_mtf_init
+  public :: jcf_mtf_dump
   public :: jcf_mtf_set
   public :: jcf_mtf_open
   public :: jcf_mtf_close
@@ -45,6 +46,9 @@ module jcf_maptabfile
   public :: jcf_mtf_read_one_record
   public :: jcf_mtf_write_head
   public :: jcf_mtf_write_whole_records
+  public :: jcf_mtf_write_one_record
+
+  public :: jcf_mtab_set
 
   integer,parameter :: dp_k = 8 !! define somewhere.
 
@@ -58,6 +62,12 @@ module jcf_maptabfile
     character(len=mtf_fnlen) :: name = 'XXXX'
     logical :: binary = .false. !< .F. if text format
     logical :: opened = .false. !< .T. after opened
+    character(len=mtf_clen) :: crecv=''
+    integer :: nrecv
+    character(len=mtf_clen) :: csend=''
+    integer :: nsend
+    integer :: nrec = -1
+    integer :: irec = -1
   end type maptabfile_t
 
 
@@ -75,19 +85,25 @@ module jcf_maptabfile
   integer,parameter,public :: mtf_imiss =  -999
   real(dp_k),parameter,public :: mtf_fmiss = -999.d0
 
-  character(len=*),parameter :: rec_form='(2I10,2E20.10)'
+  character(len=*),parameter :: rec_form='(2I10,2E24.15)'
 contains
   !!========================================================================
   !> Initialize maptabfile_t
   subroutine jcf_mtf_init(self)
     type(maptabfile_t),intent(out) :: self
 
-    self=maptabfile_t( &
-         & lun  = 0, &
-         & name = 'XXXX',&
-         & binary=.false.,&
-         & opened=.false.,&
-         & istat=0 )
+    self=maptabfile_t(  &
+         & istat  = 0,  &
+         & lun    = 0,  &
+         & name   = 'XXXX',&
+         & binary = .false.,&
+         & opened = .false.,&
+         & crecv  = '', &
+         & nrecv  = 0,  &
+         & csend  = '', &
+         & nsend  = 0,  &
+         & nrec   = -1, &
+         & irec   = -1  )
 
     return
   end subroutine jcf_mtf_init
@@ -104,14 +120,20 @@ contains
     if ( present(unit) ) lun=unit
 
     if ( present(head) )  then
-      write(lun,'(A)')   head
+      write(lun,'(1X,A)')   head
     else
-      write(lun,'(A)')   '##### dump maptabfile_t #####'
+      write(lun,'(1X,A)')   '##### dump maptabfile_t #####'
     end if
-    write(lun,'(A,A)') '      name:',trim(self%name)
-    write(lun,'(A,L5)')'    binary:',self%binary
-    write(lun,'(A,L5)')'    opened:',self%opened
-    write(lun,'(A,I5)')'     istat:',self%istat
+    write(lun,'(A,A)')  '       name: ',trim(self%name)
+    write(lun,'(A,L5)') '     binary: ',self%binary
+    write(lun,'(A,L5)') '     opened: ',self%opened
+    write(lun,'(A,A)')  '      crecv: ',trim(self%crecv)
+    write(lun,'(A,I10)')'      nrecv: ',self%nrecv
+    write(lun,'(A,A)')  '      csend: ',trim(self%csend)
+    write(lun,'(A,I10)')'      nsend: ',self%nsend
+    write(lun,'(A,I10)')'       nrec: ',self%nrec
+!!$    write(lun,'(A,I10)')'      irec: ',self%irec
+!!$    write(lun,'(A,I10)')'     istat: ',self%istat
 
     return
   end subroutine jcf_mtf_dump
@@ -122,14 +144,33 @@ contains
   !!
   subroutine jcf_mtf_set(self, &
        & name   , &
-       & binary   )
+       & binary ,&
+       & crecv  ,&
+       & nrecv  ,&
+       & csend  ,&
+       & nsend  ,&
+       & nrec    )
+
     type(maptabfile_t),intent(inout) :: self
-    character(len=*),intent(in),optional :: name
-    logical,intent(in),optional :: binary
+    character(len=*) ,intent(in),optional :: name
+    logical          ,intent(in),optional :: binary
+    character(len=*) ,intent(in),optional :: crecv
+    integer          ,intent(in),optional :: nrecv
+    character(len=*) ,intent(in),optional :: csend
+    integer          ,intent(in),optional :: nsend
+    integer          ,intent(in),optional :: nrec
+
 
     if ( present(name) ) self%name=name
     if ( present(binary) ) self%binary=binary
+
+    if ( present(crecv) ) self%crecv = crecv
+    if ( present(nrecv) ) self%nrecv = nrecv
+    if ( present(csend) ) self%csend = csend
+    if ( present(nsend) ) self%nsend = nsend
+    if ( present(nrec) ) self%nrec = nrec
        
+
     return
 
   end subroutine jcf_mtf_set
@@ -209,8 +250,9 @@ contains
     self%binary=lbin
     self%opened=.true.
     self%istat=0
+    self%irec=-1
 
-    call jcf_mtf_dump(self,unit=0,head='jcf_mtf_open:Opened:')
+!!$    call jcf_mtf_dump(self,unit=0,head='dbg:jcf_mtf_open:Opened:')
     return
 
   end subroutine jcf_mtf_open
@@ -228,6 +270,7 @@ contains
     self%lun=0
     self%opened=.false.
     self%istat=0
+    self%irec=-1
 
     return
   end subroutine jcf_mtf_close
@@ -239,13 +282,13 @@ contains
   !! \note
   !! After calling this routine, file point is set the head of first record.
   !! 
-  subroutine jcf_mtf_read_head(self, crecv, nrecv, csend, nsend, nrec )
+  subroutine jcf_mtf_read_head(self,crecv,nrecv,csend,nsend,nrec)
     type(maptabfile_t),intent(inout) :: self  !< maptab file
-    character(len=MTF_CLEN),intent(out)  :: crecv !< name and desc of receiver 
-    integer,            intent(out)  :: nrecv !< num of receiver polygon
-    character(len=MTF_CLEN),intent(out)  :: csend !< name and desc of sender
-    integer,            intent(out)  :: nsend !< num of sender polygon
-    integer,            intent(out)  :: nrec  !< num of record
+    character(len=MTF_CLEN),intent(out),optional  :: crecv !< name and desc of receiver 
+    integer,                intent(out),optional  :: nrecv !< num of receiver polygon
+    character(len=MTF_CLEN),intent(out),optional  :: csend !< name and desc of sender
+    integer,                intent(out),optional  :: nsend !< num of sender polygon
+    integer,                intent(out),optional  :: nrec  !< num of record
 
 
     if ( .not. self%opened ) then
@@ -255,21 +298,30 @@ contains
 
     if ( self%binary ) then
       rewind(self%lun)
-      read(self%lun) crecv
-      read(self%lun) nrecv
-      read(self%lun) csend
-      read(self%lun) nsend 
-      read(self%lun) nrec  
+      read(self%lun) self%crecv
+      read(self%lun) self%nrecv
+      read(self%lun) self%csend
+      read(self%lun) self%nsend 
+      read(self%lun) self%nrec  
     else
       rewind(self%lun)
-      read(self%lun,'(A80)') crecv
-      read(self%lun,'(I16)'  ) nrecv
-      read(self%lun,'(A80)') csend
-      read(self%lun,'(I16)'  ) nsend 
-      read(self%lun,'(I16)'  ) nrec  
+      read(self%lun,'(A80)') self%crecv
+      read(self%lun,'(I16)'  ) self%nrecv
+      read(self%lun,'(A80)') self%csend
+      read(self%lun,'(I16)'  ) self%nsend 
+      read(self%lun,'(I16)'  ) self%nrec  
     end if
 
-    self%istat=0
+    self%istat = 0
+    self%nrec  = nrec
+    self%irec  = 0
+
+    if ( present( crecv ) ) crecv = self%crecv
+    if ( present( nrecv ) ) nrecv = self%nrecv
+    if ( present( csend ) ) csend = self%csend
+    if ( present( nsend ) ) nsend = self%nsend
+    if ( present( nrec  ) ) nrec  = self%nrec
+
     return
   end subroutine jcf_mtf_read_head
 
@@ -280,17 +332,25 @@ contains
   !!
   !! Must allocate mtab(:) BEFORE calling me.
   !! 
-  subroutine jcf_mtf_read_whole_records(self, mtab, nrec)
+  subroutine jcf_mtf_read_whole_records(self, mtab)
     type(maptabfile_t),intent(inout) :: self
     type(maptab_t),intent(out) :: mtab(:)
-    integer, intent(in) :: nrec
 
+    integer :: nrec
     integer :: n
 
     if ( .not. self%opened ) then
       write(0,*)'ERR: jcf_mtf_read_whole_records: File NOT Opened Yet!'
       call exit(1)
     end if
+
+    if ( self%nrec .ne. size(mtab) ) then
+      write(0,*)'WRN:maptab size mismatch:'
+      write(0,*)'    header:',self%nrec
+      write(0,*)'      data:',size(mtab)
+    end if
+
+    nrec = min(self%nrec,size(mtab))
 
     if ( self%binary ) then
       do n = 1, nrec
@@ -302,6 +362,8 @@ contains
       end do
     end if
 
+    self%istat=0
+    self%irec=nrec
     return
 
   end subroutine jcf_mtf_read_whole_records
@@ -328,13 +390,15 @@ contains
     end if
 
     if ( ios .ne. 0 ) then
-      write(0,*)'ERR:jcf_mtf_read_one_record:Read ERRor: '//trim(emsg)
+      write(0,*)'ERR:jcf_mtf_read_one_record:Read Error: '//trim(emsg)
       call exit(1)
     end if
 
     coeff1 = cf(1)
     if (present(coeff2)) coeff2 = cf(2)
 
+    self%istat=0
+    self%irec=self%irec+1
 
     return
   end subroutine jcf_mtf_read_one_record
@@ -348,11 +412,11 @@ contains
   !! 
   subroutine jcf_mtf_write_head(self, crecv, nrecv, csend, nsend, nrec )
     type(maptabfile_t),intent(inout) :: self  !< maptab file
-    character(len=*),intent(in)   :: crecv !< name and desc of receiver 
-    integer,            intent(in)   :: nrecv !< num of receiver polygon
-    character(len=*),intent(in)   :: csend !< name and desc of sender
-    integer,            intent(in)   :: nsend !< num of sender polygon
-    integer,            intent(in)   :: nrec  !< num of record
+    character(len=*), intent(in),optional :: crecv !< name and desc of receiver 
+    integer,          intent(in),optional :: nrecv !< num of receiver polygon
+    character(len=*), intent(in),optional :: csend !< name and desc of sender
+    integer,          intent(in),optional :: nsend !< num of sender polygon
+    integer,          intent(in),optional :: nrec  !< num of record
 
     character(len=MTF_CLEN) :: cdesc
 
@@ -361,28 +425,31 @@ contains
       call exit(1)
     end if
 
+    if ( present(crecv) ) self%crecv = crecv
+    if ( present(nrecv) ) self%nrecv = nrecv
+    if ( present(csend) ) self%csend = csend
+    if ( present(nsend) ) self%nsend = nsend
+    if ( present(nrec ) ) self%nrec  = nrec
+
 !!$    write(0,*)'dbg:jcf_mtf_write_head:self%lun,self%binary:',self%lun,self%binary
     if ( self%binary ) then
       rewind(self%lun)
-      cdesc=trim(crecv)
-      write(self%lun) cdesc
-      write(self%lun) nrecv
-      cdesc=trim(csend)
-      write(self%lun) cdesc
-      write(self%lun) nsend 
-      write(self%lun) nrec  
+      write(self%lun) self%crecv
+      write(self%lun) self%nrecv
+      write(self%lun) self%csend
+      write(self%lun) self%nsend 
+      write(self%lun) self%nrec  
     else
       rewind(self%lun)
-      cdesc=trim(crecv)
-      write(self%lun,'(A80)') cdesc
-      write(self%lun,'(I16)') nrecv
-      cdesc=trim(csend)
-      write(self%lun,'(A80)') cdesc
-      write(self%lun,'(I16)') nsend 
-      write(self%lun,'(I16)') nrec  
+      write(self%lun,'(A80)') self%crecv 
+      write(self%lun,'(I16)') self%nrecv 
+      write(self%lun,'(A80)') self%csend 
+      write(self%lun,'(I16)') self%nsend 
+      write(self%lun,'(I16)') self%nrec  
     end if
 
     self%istat=0
+    self%irec=0
     return
   end subroutine jcf_mtf_write_head
 
@@ -390,10 +457,12 @@ contains
   !!========================================================================
   !> Write whole record as an array of maptab_t,
   !!
-  subroutine jcf_mtf_write_whole_records(self, mtab, nrec)
+  subroutine jcf_mtf_write_whole_records(self, mtab)
     type(maptabfile_t),intent(inout) :: self
     type(maptab_t),intent(out) :: mtab(:)
-    integer, intent(in) :: nrec
+
+
+    integer :: nrec
 
     integer :: n
 
@@ -401,6 +470,8 @@ contains
       write(0,*)'ERR: jcf_mtf_write_whole_records: File NOT Opened Yet!'
       call exit(1)
     end if
+
+    nrec = size(mtab)
 
 !!$    write(0,*)'dbg:jcf_mtf_write_whole_records:self%lun,self%binary:',self%lun,self%binary
     if ( self%binary ) then
@@ -413,9 +484,71 @@ contains
       end do
     end if
 
+    self%nrec=nrec
+    self%irec=nrec
+
     return
 
   end subroutine jcf_mtf_write_whole_records
+
+
+
+  !!========================================================================
+  !> Write one record.
+  subroutine jcf_mtf_write_one_record(self,ridx,sidx,coeff1,coeff2)
+!!$F2003    class(maptabfile_t),intent(inout) :: self
+    type(maptabfile_t),intent(inout) :: self
+    integer,intent(in) :: sidx !< sender index
+    integer,intent(in) :: ridx !< receiver index
+    real(dp_k),intent(in):: coeff1 !< coefficient
+    real(dp_k),intent(in),optional :: coeff2 !< second coefficient, if available.
+
+    real(dp_k) :: cf(2)
+    integer :: ios=0
+    character(len=80) :: emsg
+
+    cf(1) = coeff1
+    if ( present(coeff2) ) then
+      cf(2) = coeff2
+    else
+      cf(2) = mtf_fmiss
+    end if
+
+    if ( self%binary ) then
+      write(self%lun,iostat=ios,iomsg=emsg) ridx, sidx, cf(1:2)
+    else
+      write(self%lun,rec_form,iostat=ios,iomsg=emsg) ridx, sidx, cf(1:2)
+    end if
+
+    if ( ios .ne. 0 ) then
+      write(0,*)'ERR:jcf_mtf_write_one_record:Write Error: '//trim(emsg)
+      call exit(1)
+    end if
+
+    self%irec = self%irec+1
+
+    return
+  end subroutine jcf_mtf_write_one_record
+
+
+  !!========================================================================
+  !> set maptab_t
+  subroutine jcf_mtab_set(mt,ridx,sidx,coef)
+    type(maptab_t),intent(out) :: mt
+    integer       ,intent(in)  :: ridx
+    integer       ,intent(in)  :: sidx
+    real(kind=8)  ,intent(in)  :: coef(:)
+
+    mt%ridx = ridx
+    mt%sidx = sidx
+    mt%coef(:) = coef(:)
+
+    return
+
+  end subroutine jcf_mtab_set
+
+
+
 
 
 !!$========================================================================
