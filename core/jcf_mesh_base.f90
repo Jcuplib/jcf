@@ -216,6 +216,8 @@ module jcf_mesh_base
 
   public :: is_in_this_polygon
 
+  public :: count_correspondance
+
   private :: point_type
   private :: point_ptr_type
   private :: side_type
@@ -1427,5 +1429,36 @@ subroutine write_monitor_info(FID)
 end subroutine write_monitor_info
 
 !=======+=========+=========+=========+=========+=========+=========+=========+
+
+
+!=======+=========+=========+=========+=========+=========+=========+=========+
+!> count correspondance of sender-receiver grids(polygons)
+subroutine count_correspondance( count, rmesh, smesh )
+  implicit none 
+  integer, intent(out) :: count
+  type(mesh_type), intent(in) :: rmesh !< receiver 
+  type(mesh_type), intent(in) :: smesh !< sender
+
+  type(polygon_type),pointer :: rpoly, spoly
+  integer :: nr, nt
+  
+
+  count=0
+  do nr = 1, rmesh%num_of_polygon
+    rpoly => get_polygon_ptr(rmesh,nr)
+    if (rpoly%mask) then
+      do nt = 1, rpoly%num_of_target
+        spoly => get_target_polygon_by_num(rpoly, nt)
+        if ( spoly%mask ) then
+          count = count+1
+        end if
+      end do
+    end if
+  end do
+
+
+  return
+end subroutine count_correspondance
+
 
 end module jcf_mesh_base
