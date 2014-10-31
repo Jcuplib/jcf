@@ -94,11 +94,22 @@ program test_mtf_read_write
        & nrec=nn   ,&
        & ncf = nc )
   write(*,*)'Read Header:'
-  write(*,*)'    crecv:',cr
+  write(*,*)'    crecv:','"'//cr//'"'
   write(*,*)'    nrecv:',nr
-  write(*,*)'    csend:',cs
+  write(*,*)'    csend:','"'//cs//'"'
   write(*,*)'    nsend:',ns
   write(*,*)'    nrec :',nn
+  write(*,*)
+  write(*,*)'    receiver compo:','"'//cr(1:index(cr,' ')-1)//'"'
+  write(*,*)'    receiver desc.:','"'//cr(index(cr,' ')+1:)//'"'
+  write(*,*)'    sender compo  :','"'//cs(1:index(cs,' ')-1)//'"'
+  write(*,*)'    sender desc.  :','"'//cs(index(cs,' ')+1:)//'"'
+
+  if ( index(crecv, 'COCO') > 0 ) then
+    write(*,*)'COCO is a receiver !!'
+  else
+    write(*,*)'COCO is NOT a receiver!!'
+  end if
 
   call jcf_mtab_alloc(mtab,nn,nc)
   call jcf_mtf_read_whole_records(mtf,mtab)

@@ -18,7 +18,8 @@
 !! description.  For example:
 !! 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~
-!!  cname = crecv(1:index(crecv,' '))
+!!  cname = crecv(1:index(crecv,' ')-1) !! name
+!!  cdesc = crecv(index(crecv,' ')+1:) !! description
 !!  if ( cname .ne. yourcomponame) then
 !!     !! you have wrong data
 !!  end if
