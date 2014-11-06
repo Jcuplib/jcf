@@ -508,12 +508,12 @@ contains
 
     cf(:) = mtf_fmiss
     if ( self%binary ) then
-      read(self%lun) ridx, sidx, coef(:)
+      read(self%lun,iostat=ios) ridx, sidx, coef(:)
     else
-      read(self%lun,rec_form) ridx, sidx, coef(:)
+      read(self%lun,rec_form,iostat=ios) ridx, sidx, coef(:)
     end if
 
-    self%istat = 0
+    self%istat = ios
     self%irec = self%irec+1
 
     return
