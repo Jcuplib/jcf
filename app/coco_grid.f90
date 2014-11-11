@@ -66,8 +66,7 @@ module coco_grid
   public :: cal_first_guess_tuple
 
 
-  integer, parameter :: STR_LEN = 1024
-  integer, parameter :: FILE_UNIT = 887
+  integer, parameter :: FNLEN = 1024
 
   type(mesh_type) :: coco !< type(mesh_type) instance for COCO grid.
 
@@ -88,7 +87,7 @@ module coco_grid
   real(kind=8), pointer :: vy(:,:) !< volume grid y (NX+1, NY+1)
 
 
-  character(len=STR_LEN) :: coco_grid_file='GRIDO.m52' !< COCO grid file name
+  character(len=FNLEN) :: coco_grid_file='GRIDO.m52' !< COCO grid file name
   integer                :: coco_nx=360                !< NX
   integer                :: coco_ny=256                !< NY
   real(kind=8)           :: tripole_lat = 62.73081     !< TLAT
@@ -127,7 +126,7 @@ contains
     integer         , intent(IN), optional :: cnf_fid  !< namelist file lun.
 
     integer :: fid
-    character(len=STR_LEN) :: fname
+    character(len=FNLEN) :: fname
 
     logical :: open_cnf_myself
     integer :: i, j
@@ -155,7 +154,7 @@ contains
       write(LOG_FID,*) 'xxx Not appropriate names in namelist cocogrd. STOP.'
       stop
     endif
-    write(LOG_FID, nml=cocogrd )
+!!$    write(LOG_FID, nml=cocogrd )
     if ( open_cnf_myself ) then
       close(fid)
     end if
@@ -164,11 +163,10 @@ contains
     NY = coco_ny
     TLAT = tripole_lat+EPSILON
 
-    write(LOG_FID, '(A)')       "Msg : Sub[init_grid]/Mod[coco_grid]"
-    write(LOG_FID, '(A)')       "----- coco grid initialize "
-    write(LOG_FID, '(A,I5)')    " ----- NX : ", NX
-    write(LOG_FID, '(A,I5)')    " ----- NY : ", NY
-    write(LOG_FID, '(A,F10.5)') " ----- TriLat : ", TLAT
+    write(LOG_FID, '(A)')       "*** init_grid/coco_grid:"
+    write(LOG_FID, '(A15,": ",I0)')    "NX", NX
+    write(LOG_FID, '(A15,": ",I0)')    "NY", NY
+    write(LOG_FID, '(A15,": ",F0.5)') "TriLat", TLAT
     write(LOG_FID, *)
 
     allocate( xt  (NX,   NY)  ,&
@@ -242,7 +240,7 @@ contains
          & iostat = ierr           )
 
     if ( ierr /= 0 ) then
-      write(0,*) 'Err:input_grid/coco_grid: Cannot open coco_grid file!'//trim(fname)
+      write(0,'(A)') 'Err:input_grid/coco_grid: Cannot open coco_grid file!'//trim(fname)
       call exit(1)
     endif
 
@@ -255,7 +253,7 @@ contains
 
     close(fid)
 
-    write(LOG_FID,*) '*** coco_grid file was read successfully:'//trim(coco_grid_file)
+    write(LOG_FID,'(A)') '*** coco_grid file was read successfully:'//trim(coco_grid_file)
 
     return
   end subroutine input_grid
@@ -733,21 +731,25 @@ contains
   !>
   subroutine write_data_grid(file_name)
     use jcf_mesh_base, only : get_data_point_x, get_data_point_y
+    use jcf_misc, only: jcf_avail_fid
     implicit none
     character(len=*), intent(IN) :: file_name
     integer :: i, j
 
-    open(unit = FILE_UNIT, FILE = trim(file_name), access = "SEQUENTIAL", ERR = 1000)
+    integer :: fid
+
+    fid = jcf_avail_fid()
+    open(unit = fid, FILE = trim(file_name), access = "SEQUENTIAL", ERR = 1000)
 
     do j = 1, NY
       do i = 1, NX
         if (mask(i, j) == 1.d0) then
-          write(FILE_UNIT, *) get_data_point_x(coco, get_polygon_index(i,j)), get_data_point_y(coco, get_polygon_index(i,j))
+          write(fid, *) get_data_point_x(coco, get_polygon_index(i,j)), get_data_point_y(coco, get_polygon_index(i,j))
         end if
       end do
     end do
 
-    close(FILE_UNIT)
+    close(fid)
 
     return
 
@@ -761,6 +763,7 @@ contains
   !>
   subroutine write_data_grid_index(file_name)
     use jcf_mesh_base, only : get_data_point_x, get_data_point_y
+    use jcf_misc, only: jcf_avail_fid
     implicit none
     character(len=*), intent(IN) :: file_name
     integer :: i, j
@@ -768,11 +771,15 @@ contains
     real(kind=8) :: lon, lat
     character(len=256) :: data_str
 
+    integer :: fid
+
     font_size = 4
     font_angle = 0
     font_no = 1
 
-    open(unit = FILE_UNIT, FILE = trim(file_name), access = "SEQUENTIAL", ERR = 1000)
+
+    fid = jcf_avail_fid()
+    open(unit = fid, FILE = trim(file_name), access = "SEQUENTIAL", ERR = 1000)
 
     do j = 1, NY
       do i = 1, NX
@@ -780,13 +787,13 @@ contains
         lat = get_data_point_y(coco, get_polygon_index(i,j))
         grid_index = 100*i+j
         write(data_str, "(2f10.5,3I2,A,I4)") lon, lat+0.1, font_size, font_angle, font_no, " BC", i
-        write(FILE_UNIT, *) trim(data_str)
+        write(fid, *) trim(data_str)
         write(data_str, "(2f10.5,3I2,A,I4)") lon, lat, font_size, font_angle, font_no, " TC ", j
-        write(FILE_UNIT, *) trim(data_str)
+        write(fid, *) trim(data_str)
       end do
     end do
 
-    close(FILE_UNIT)
+    close(fid)
 
     return
 
@@ -800,34 +807,37 @@ contains
   !>
   subroutine write_volume_grid(file_name)
     use jcf_mesh_base, only : get_point_x, get_point_y
+    use jcf_misc, only: jcf_avail_fid
     implicit none
     character(len=*), intent(IN) :: file_name
     integer :: i, j
+    integer :: fid
 
-    open(unit = FILE_UNIT, FILE = trim(file_name), access = "SEQUENTIAL", ERR = 1000)
+    fid = jcf_avail_fid()
+    open(unit = fid, FILE = trim(file_name), access = "SEQUENTIAL", ERR = 1000)
 
     do j = 1, NY
       do i = 1, NX
-        write(FILE_UNIT, *) get_point_x(coco, get_polygon_index(i,j),1), get_point_y(coco, get_polygon_index(i,j),1)
-        write(FILE_UNIT, *) get_point_x(coco, get_polygon_index(i,j),2), get_point_y(coco, get_polygon_index(i,j),2)
-        write(FILE_UNIT, *) get_point_x(coco, get_polygon_index(i,j),3), get_point_y(coco, get_polygon_index(i,j),3)
-        write(FILE_UNIT, *) ">"
+        write(FID, *) get_point_x(coco, get_polygon_index(i,j),1), get_point_y(coco, get_polygon_index(i,j),1)
+        write(FID, *) get_point_x(coco, get_polygon_index(i,j),2), get_point_y(coco, get_polygon_index(i,j),2)
+        write(FID, *) get_point_x(coco, get_polygon_index(i,j),3), get_point_y(coco, get_polygon_index(i,j),3)
+        write(FID, *) ">"
       end do
     end do
 
     do i = 1, NX
-      write(FILE_UNIT, *) get_point_x(coco, get_polygon_index(i,NY),1), get_point_y(coco, get_polygon_index(i,NY),1)
+      write(FID, *) get_point_x(coco, get_polygon_index(i,NY),1), get_point_y(coco, get_polygon_index(i,NY),1)
     end do
-    write(FILE_UNIT, *) get_point_x(coco, get_polygon_index(NX,NY),4), get_point_y(coco, get_polygon_index(NX,NY),4)
-    write(FILE_UNIT, *) ">"
+    write(FID, *) get_point_x(coco, get_polygon_index(NX,NY),4), get_point_y(coco, get_polygon_index(NX,NY),4)
+    write(FID, *) ">"
 
     do j = 1, NY
-      write(FILE_UNIT, *) get_point_x(coco, get_polygon_index(NX,j),3), get_point_y(coco, get_polygon_index(NX,j),3)
+      write(FID, *) get_point_x(coco, get_polygon_index(NX,j),3), get_point_y(coco, get_polygon_index(NX,j),3)
     end do
-    write(FILE_UNIT, *) get_point_x(coco, get_polygon_index(NX,NY),4), get_point_y(coco, get_polygon_index(NX,NY),4)
+    write(FID, *) get_point_x(coco, get_polygon_index(NX,NY),4), get_point_y(coco, get_polygon_index(NX,NY),4)
 
 
-    close(FILE_UNIT)
+    close(FID)
 
     return
 
