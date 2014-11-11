@@ -548,8 +548,9 @@ contains
   !!===================================================================================
   !> readin hgrid files
   subroutine input_hgrid(basename)
-    use jcf_misc, only: jcf_avail_fid
-    use mod_misc, only: LOG_FID
+    use jcf_misc, only: &
+         & jcf_avail_fid, &
+         & LOG_FID => jcf_log_fid
     implicit none
 
     character(len=*), intent(in) :: basename
@@ -1516,7 +1517,7 @@ contains
 
   subroutine set_polar_polygon(this)
     use jcf_mesh_base,only : polygon_type, is_in_this_polygon,get_data_point_x,get_data_point_y
-    use mod_misc, only: LOG_FID
+    use jcf_misc, only: LOG_FID => jcf_log_fid
     type(mesh_type), intent(INOUT) :: this !< this mesh
 
     type(polygon_type),pointer :: polygon
