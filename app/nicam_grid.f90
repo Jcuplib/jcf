@@ -42,7 +42,6 @@
 module nicam_grid
   use jcf_mesh_base, only : mesh_type
   implicit none
-  private
 
   public :: nicam
 
@@ -72,29 +71,29 @@ module nicam_grid
 
   type(mesh_type) :: nicam !< type(mesh_type) instance for NICAM grid.
 
-  integer :: NX
-  integer :: NY
-  integer :: NL
+  integer,private :: NX
+  integer,private :: NY
+  integer,private :: NL
 
-  integer, parameter :: DMD = 10 !< number of outer-most domain of ICO grid.
-  integer, parameter :: GDUMMY = 1 !< width of halo region
-  integer :: gall
-  integer :: gall1d
-  integer :: gall_pl
-  integer :: lall
-  integer :: lall_pl
-  integer :: lin  ! number of inner domain, lall/DMD
-  integer :: lin_1d ! sqrt(lin)
+  integer, parameter,private :: DMD = 10 !< number of outer-most domain of ICO grid.
+  integer, parameter,private :: GDUMMY = 1 !< width of halo region
+  integer,private :: gall
+  integer,private :: gall1d
+  integer,private :: gall_pl
+  integer,private :: lall
+  integer,private :: lall_pl
+  integer,private :: lin        ! number of inner domain, lall/DMD
+  integer,private :: lin_1d     ! sqrt(lin)
 
   integer,public :: TOP_POLE
   integer,public :: BOT_POLE
 
-  real(kind=8), allocatable :: grid_x     (:,:,:,:)
-  real(kind=8), allocatable :: grid_xt    (:,:,:,:,:)
-  real(kind=8), allocatable :: grid_x_pl  (:,:,:,:)
-  real(kind=8), allocatable :: grid_xt_pl (:,:,:,:)
+  real(kind=8), allocatable,private :: grid_x     (:,:,:,:)
+  real(kind=8), allocatable,private :: grid_xt    (:,:,:,:,:)
+  real(kind=8), allocatable,private :: grid_x_pl  (:,:,:,:)
+  real(kind=8), allocatable,private :: grid_xt_pl (:,:,:,:)
 
-  integer, allocatable :: region_info(:,:,:) ! region_info(Target_rgn:Target_direc, My_Direc, My_Rgn_ID)
+  integer, allocatable,private :: region_info(:,:,:) ! region_info(Target_rgn:Target_direc, My_Direc, My_Rgn_ID)
 
   type grid_type
     real(kind=8) :: lon
@@ -102,12 +101,12 @@ module nicam_grid
 !!$    real(kind=8) :: landmask
   end type grid_type
 
-  type(grid_type), pointer :: data_grid  (:,:,:)   ! grid center
-  type(grid_type), pointer :: volume_grid(:,:,:,:) ! grid vertex(up,down)
+  type(grid_type), pointer,private :: data_grid  (:,:,:)   ! grid center
+  type(grid_type), pointer,private :: volume_grid(:,:,:,:) ! grid vertex(up,down)
 
 
-  integer :: glevel = 5
-  integer :: rlevel = 0
+  integer :: glevel = 5 !< glevel
+  integer :: rlevel = 0 !< rlevel
   integer :: vlayer = 1                     !< dummy here
   character(len=FNLEN) :: rgnmngfname = ""  !< region info filename
   character(len=FNLEN) :: hgrid_fname = ""  !< horizontal grid filename
@@ -127,9 +126,13 @@ module nicam_grid
 contains
 
   !===================================================================================
-  !> initialize nicam grid
+  !> Initialize type(mesh_type) instance for nicam grid.
   !!
-  !! `gall` = (NX+2)*(NY+2)
+  !! Ether `cnf_file` or `cnf_fid` must be supplied.
+  !! - `cnf_file` is supplied, open/close this file in this routine,
+  !! - `cnf_fid` is supplied, assumes that cnf file is already opened,
+  !! - None of `cnf_file`/`cnf_fid` is given, cause error.
+  !! .
   subroutine init_grid(cnf_file, cnf_fid)
     use jcf_spherical_lib, only: &
          & init_spherical_lib
@@ -152,7 +155,7 @@ contains
     integer :: dout, din
 
 
-    !! Open cnf(namelist) file if cnf_file is given, else just rewind.
+    ! Open cnf(namelist) file if cnf_file is given, else just rewind.
     if ( present(cnf_fid) ) then
       fid = cnf_fid
       open_cnf_myself = .false.
@@ -171,7 +174,7 @@ contains
     elseif( ierr > 0 ) then
       write(0,      '(A)') 'ERR:init_grid/nicam_grid: nicamgrd read error.'
       call exit(1)
-    endif
+    end if
 !!$    write(LOG_FID,nml=nicamgrd)
     if ( open_cnf_myself ) then
       close(fid)
@@ -231,11 +234,11 @@ contains
               call init_polygon(nicam, get_polygon_index(i,j,l), 5) ! pentagonal initialization
             else
               call init_polygon(nicam, get_polygon_index(i,j,l), 6) ! hexagonal initialization
-            endif
-          enddo
-        enddo
-      enddo
-    enddo
+            end if
+          end do
+        end do
+      end do
+    end do
 
     call init_polygon(nicam, TOP_POLE, 5)
     call init_polygon(nicam, BOT_POLE, 5)
@@ -262,7 +265,9 @@ contains
 
 
   !!===================================================================================
-  !> read nicam_grid data file and setup mesh_type instance.
+  !> Read nicam_grid data file and setup mesh_type instance.
+  !!
+  !! Read in rgninfo file and hgrid files.
   subroutine read_grid()
     use jcf_misc, only: &
          & LOG_FID => jcf_log_fid
@@ -284,7 +289,9 @@ contains
   real(kind=8) function get_data(i, j, l)
     use jcf_mesh_base, only : get_mesh_data => get_data
     implicit none
-    integer, intent(IN) :: i, j, l
+    integer, intent(IN) :: i !< data point tuple
+    integer, intent(IN) :: j !< data point tuple
+    integer, intent(IN) :: l !< data point tuple
 
     get_data = get_mesh_data(nicam, get_polygon_index(i,j,l))
 
@@ -296,21 +303,23 @@ contains
   !!
   !! __Tentatively disabled__.
   !!
-!!$  logical function get_mask(i,j,l)
+  logical function get_mask()
 !!$    use jcf_mesh_base, only : get_mesh_mask => get_mask
 !!$    implicit none
 !!$    integer, intent(IN) :: i, j, k
 !!$
 !!$    get_mask = get_mesh_mask(nicam, get_polygon_index(i,j,k))
 !!$
-!!$  end function get_mask
+  end function get_mask
 
 
   !!===================================================================================
   !> Return longitude(deg) of (i,j,l)'th data_point
   real(kind=8) function get_data_lon(i,j,l)
     implicit none
-    integer, intent(IN) :: i, j, l
+    integer, intent(IN) :: i !< data point tuple
+    integer, intent(IN) :: j !< data point tuple
+    integer, intent(IN) :: l !< data point tuple
 
     get_data_lon = data_grid(i,j,l)%lon
 
@@ -321,7 +330,9 @@ contains
   !> Return latitude(deg) of (i,j,l)'th data_point
   real(kind=8) function get_data_lat(i,j,l)
     implicit none
-    integer, intent(IN) :: i, j, l
+    integer, intent(IN) :: i !< data point tuple
+    integer, intent(IN) :: j !< data point tuple
+    integer, intent(IN) :: l !< data point tuple
 
     get_data_lat = data_grid(i,j,l)%lat
 
@@ -335,7 +346,9 @@ contains
   real(kind=8) function get_data_grid_x(i,j,l)
     use jcf_mesh_base, only : get_data_point_x
     implicit none
-    integer, intent(IN) :: i, j, l
+    integer, intent(IN) :: i !< data point tuple
+    integer, intent(IN) :: j !< data point tuple
+    integer, intent(IN) :: l !< data point tuple
 
     get_data_grid_x = get_data_point_x(nicam, get_polygon_index(i,j,l))
 
@@ -347,7 +360,9 @@ contains
   real(kind=8) function get_data_grid_y(i,j,l)
     use jcf_mesh_base, only : get_data_point_y
     implicit none
-    integer, intent(IN) :: i, j, l
+    integer, intent(IN) :: i !< data point tuple
+    integer, intent(IN) :: j !< data point tuple
+    integer, intent(IN) :: l !< data point tuple
 
     get_data_grid_y = get_data_point_y(nicam, get_polygon_index(i,j,l))
 
@@ -359,7 +374,10 @@ contains
   real(kind=8) function get_volume_grid_x(i, j, l, p)
     use jcf_mesh_base, only : get_point_x
     implicit none
-    integer, intent(IN) :: i, j, l, p
+    integer, intent(IN) :: i !< data point tuple
+    integer, intent(IN) :: j !< data point tuple
+    integer, intent(IN) :: l !< data point tuple
+    integer, intent(IN) :: p !< up/down of volume grid.
 
     get_volume_grid_x = get_point_x(nicam, get_polygon_index(i, j, l), p)
 
@@ -371,7 +389,10 @@ contains
   real(kind=8) function get_volume_grid_y(i, j, l, p)
     use jcf_mesh_base, only : get_point_y
     implicit none
-    integer, intent(IN) :: i, j, l, p
+    integer, intent(IN) :: i !< data point tuple
+    integer, intent(IN) :: j !< data point tuple
+    integer, intent(IN) :: l !< data point tuple
+    integer, intent(IN) :: p !< up/down of volume grid.
 
     get_volume_grid_y = get_point_y(nicam, get_polygon_index(i, j, l), p)
 
@@ -380,9 +401,13 @@ contains
 
   !!===================================================================================
   !> Return total grid size
+  !!
+  !!
   subroutine get_grid_size(nnx, nny, nnl)
     implicit none
-    integer, intent(OUT) :: nnx, nny, nnl
+    integer, intent(OUT) :: nnx !< X size
+    integer, intent(OUT) :: nny !< Y size
+    integer, intent(OUT) :: nnl !< L size
 
     nnx = NX
     nny = NY
@@ -396,7 +421,9 @@ contains
   !> Return number of volume points of (i,j,l)'th polygon
   integer function get_num_of_volume_point(i, j, l)
     use jcf_mesh_base, only : get_num_of_point
-    integer, intent(IN) :: i, j, l
+    integer, intent(IN) :: i !< data point tuple
+    integer, intent(IN) :: j !< data point tuple
+    integer, intent(IN) :: l !< data point tuple
 
     get_num_of_volume_point = get_num_of_point(nicam, get_polygon_index(i, j, l))
 
@@ -407,7 +434,9 @@ contains
   !> Return serialized index of (i,j,l)'th data_point
   integer function get_data_index(i, j, l)
     implicit none
-    integer, intent(IN) :: i, j, l
+    integer, intent(IN) :: i !< data point tuple
+    integer, intent(IN) :: j !< data point tuple
+    integer, intent(IN) :: l !< data point tuple
 
     get_data_index = i+NX*(j-1)+NX*NY*(l-1)
 
@@ -418,7 +447,10 @@ contains
   !> Return serialized index of p'th volume point of (i,j,l)'th polygon.
   integer function get_volume_index(i, j, l, p)
     implicit none
-    integer, intent(IN) :: i, j, l, p
+    integer, intent(IN) :: i !< data point tuple
+    integer, intent(IN) :: j !< data point tuple
+    integer, intent(IN) :: l !< data point tuple
+    integer, intent(IN) :: p !< up/down of volume grid.
 
     get_volume_index = p+2*(i-1)+2*NX*(j-1)+2*NX*NY*(l-1)
 
@@ -429,7 +461,9 @@ contains
   !> Return serialized index of (i,j,l)'th polygon
   integer function get_polygon_index(i,j,l)
     implicit none
-    integer, intent(IN) :: i, j, l
+    integer, intent(IN) :: i !< data point tuple
+    integer, intent(IN) :: j !< data point tuple
+    integer, intent(IN) :: l !< data point tuple
 
     get_polygon_index = i+NX*(j-1)+NX*NY*(l-1)
 
@@ -442,8 +476,10 @@ contains
   !! As you know, this is the reverse function of get_polygon_index() above.
   subroutine get_polygon_tuple(idx, i, j, l)
     implicit none
-    integer, intent(IN) :: idx
-    integer, intent(OUT) :: i, j, l
+    integer, intent(IN)  :: idx !< polygon index
+    integer, intent(OUT) :: i   !< polygon tuple
+    integer, intent(OUT) :: j   !< polygon tuple
+    integer, intent(OUT) :: l   !< polygon tuple
 
     i = mod(idx-1, NX)+1
     l = int((idx-1)/(NX*NX))+1
@@ -460,9 +496,9 @@ contains
   !! \note poly is deallocated here even if pre-allocated before call.
   subroutine get_polygon_from_idx( idx, poly, ierr )
     use jcf_mesh_base, only : get_point_x, get_point_y
-    integer,intent(in) :: idx
-    real(kind=8),allocatable,intent(out) :: poly(:,:)
-    integer,intent(out) :: ierr
+    integer,intent(in) :: idx   !< polygon's index
+    real(kind=8),allocatable,intent(out) :: poly(:,:) !< coords of polygon
+    integer,intent(out) :: ierr !< non-zefo if error.
 
     integer :: i,j,l
     integer,parameter :: k = 1
@@ -481,14 +517,14 @@ contains
 
     if ( allocated ( poly ) ) then
       deallocate( poly )
-    endif
+    end if
     allocate( poly(2,np) )
 
 
     do n=1,np
       poly(1,n)=get_point_x(nicam,idx,n)
       poly(2,n)=get_point_y(nicam,idx,n)
-    enddo
+    end do
 
     return
 
@@ -500,7 +536,7 @@ contains
 !!$
 !!$
   !!===================================================================================
-  !> read rgn_info file.
+  !! read rgn_info file.
   subroutine read_rgn_info(fname)
     use jcf_misc, only: &
          & jcf_avail_fid
@@ -536,7 +572,7 @@ contains
       region_info(2,3,rgnid) = ne(2)
       region_info(1,4,rgnid) = se(1)
       region_info(2,4,rgnid) = se(2)
-    enddo
+    end do
 
     close(fid)
 
@@ -546,7 +582,7 @@ contains
 
 
   !!===================================================================================
-  !> readin hgrid files
+  !! readin hgrid files
   subroutine input_hgrid(basename)
     use jcf_misc, only: &
          & jcf_avail_fid, &
@@ -584,7 +620,7 @@ contains
       read(fid) grid_xt(:,1:1,l,1:2,3)
 
       close(fid)
-    enddo
+    end do
 
     ! fill unused grid
     grid_x (suf(gall1d,1),:,:,:)   = grid_x (suf(gall1d,2),:,:,:)
@@ -606,7 +642,7 @@ contains
     if ( ierr /= 0 ) then
       write(0,'(A)') 'ERR:input_hgrid/nicam_grid: Cannot open hgrid(.pl) file!', trim(fname)
       call exit(1)
-    endif
+    end if
 
     read(fid) grid_x_pl(:,:,:,:)
     if(bgrid_dump) then
@@ -664,9 +700,9 @@ contains
           volume_grid(i,j,l,2)%lon = mod(lon,360.D0)
           volume_grid(i,j,l,2)%lat = lat
 
-        enddo
-      enddo
-    enddo
+        end do
+      end do
+    end do
 
     !! For Top/Bottom pole
     !! \todo where these ''magic number'' come from ??
@@ -694,15 +730,15 @@ contains
         volume_grid(i,1,l,1)%lat = lat
         !! for TOP/BOTTOM pole, no ''down'' volume grid.
 
-      enddo
-    enddo
+      end do
+    end do
 
 !!$    write(0,*)'dbg:cal_data_grid:data_grid(PL):'
 !!$    do l=lall+1,lall+2
 !!$      do i=0,5
 !!$        write(0,*)data_grid(i,1,l)%lon,data_grid(i,1,l)%lat
-!!$      enddo
-!!$    enddo
+!!$      end do
+!!$    end do
 
     return
   end subroutine cal_data_grid
@@ -732,9 +768,9 @@ contains
           call set_data_point_location  ( nicam, get_data_index  (i,j,l),   data_grid(i,j,l)%lon,     data_grid(i,j,l)%lat     )
           call set_volume_point_location( nicam, get_volume_index(i,j,l,1), volume_grid(i,j,l,1)%lon, volume_grid(i,j,l,1)%lat )
           call set_volume_point_location( nicam, get_volume_index(i,j,l,2), volume_grid(i,j,l,2)%lon, volume_grid(i,j,l,2)%lat )
-        enddo
-      enddo
-    enddo
+        end do
+      end do
+    end do
 
 !!$  call set_data_point_location( nicam, TOP_POLE, 0.D0,  90.D0 )
 !!$  call set_data_point_location( nicam, BOT_POLE, 0.D0, -90.D0 )
@@ -745,9 +781,9 @@ contains
       do j = 1, NY
         do i = 1, NX
           call set_data_point(nicam, get_polygon_index(i,j,l), get_data_index(i,j,l), .true.)
-        enddo
-      enddo
-    enddo
+        end do
+      end do
+    end do
 
     call set_data_point(nicam, TOP_POLE, TOP_POLE, .true.)
     call set_data_point(nicam, BOT_POLE, BOT_POLE, .true.)
@@ -766,8 +802,8 @@ contains
             call set_volume_point(nicam, polygon_index, get_volume_index(i  ,j  ,l,1))
             call set_volume_point(nicam, polygon_index, get_volume_index(i  ,j  ,l,2))
             call set_volume_point(nicam, polygon_index, get_volume_index(i-1,j  ,l,1))
-          enddo
-        enddo
+          end do
+        end do
 
         sw_rgn = region_info(1, 1, l)
         sw_drc = region_info(2, 1, l)
@@ -790,7 +826,7 @@ contains
             call set_volume_point(nicam, polygon_index, get_volume_index(i  ,j  ,l,1))
             call set_volume_point(nicam, polygon_index, get_volume_index(i  ,j  ,l,2))
             call set_volume_point(nicam, polygon_index, get_volume_index(i-1,j  ,l,1))
-          enddo
+          end do
         case(4) ! south pole
           do i = 2, NX
             polygon_index = get_polygon_index(i,j,l)
@@ -800,7 +836,7 @@ contains
             call set_volume_point(nicam, polygon_index, get_volume_index(i  ,j    ,l,1))
             call set_volume_point(nicam, polygon_index, get_volume_index(i  ,j    ,l,2))
             call set_volume_point(nicam, polygon_index, get_volume_index(i-1,j    ,l,1))
-          enddo
+          end do
         case default
           write(0,'(A)') "set_grid swdrc error"
           stop
@@ -818,7 +854,7 @@ contains
             call set_volume_point(nicam, polygon_index, get_volume_index(i  ,j  ,l,1))
             call set_volume_point(nicam, polygon_index, get_volume_index(i  ,j  ,l,2))
             call set_volume_point(nicam, polygon_index, get_volume_index(NX,j,nw_rgn,1))
-          enddo
+          end do
         case(3) ! north pole
           do j = 2, NY
             polygon_index = get_polygon_index(i,j,l)
@@ -828,7 +864,7 @@ contains
             call set_volume_point(nicam, polygon_index, get_volume_index(i  ,j  ,l,1))
             call set_volume_point(nicam, polygon_index, get_volume_index(i  ,j  ,l,2))
             call set_volume_point(nicam, polygon_index, get_volume_index(NX-j+1,NY,nw_rgn,2))
-          enddo
+          end do
         case default
           write(0,'(A)') "set_grid nw_drc error"
           stop
@@ -850,9 +886,9 @@ contains
             call set_volume_point(nicam, polygon_index, get_volume_index(NX,NY,sw_rgn,1))
             call set_volume_point(nicam, polygon_index, get_volume_index( i, j, l, 1))
             call set_volume_point(nicam, polygon_index, get_volume_index( i, j, l, 2))
-          endif
+          end if
           cycle
-        endif
+        end if
 
         if ((din>=2).and.(din<=lin_1d)) then ! sw side of outer domain
           select case (sw_drc)
@@ -879,7 +915,7 @@ contains
             stop
           end select
           cycle
-        endif
+        end if
 
         if (mod(din-1, lin_1d) == 0) then ! nw side of outer domain
           select case (nw_drc)
@@ -906,7 +942,7 @@ contains
             stop
           end select
           cycle
-        endif
+        end if
 
         polygon_index = get_polygon_index(i,j,l)
         next_rgn = region_info(1, 1, nw_rgn) ! sw region of nw region
@@ -917,8 +953,8 @@ contains
         call set_volume_point(nicam, polygon_index, get_volume_index(i  ,j  ,l,2))
         call set_volume_point(nicam, polygon_index, get_volume_index(NX, 1,nw_rgn,1))
 
-      enddo
-    enddo
+      end do
+    end do
 
     call set_volume_point(nicam, TOP_POLE, get_volume_index(1,NY,lin*1-lin_1d+1,2))
     call set_volume_point(nicam, TOP_POLE, get_volume_index(1,NY,lin*2-lin_1d+1,2))
@@ -978,8 +1014,8 @@ contains
             call set_next_polygon(nicam, polygon_index, get_polygon_index(i+1,j+1,l))
             call set_next_polygon(nicam, polygon_index, get_polygon_index(i  ,j+1,l))
             call set_next_polygon(nicam, polygon_index, get_polygon_index(i-1,j  ,l))
-          enddo
-        enddo
+          end do
+        end do
 
         sw_rgn = region_info(1, 1, l)
         sw_drc = region_info(2, 1, l)
@@ -1014,8 +1050,8 @@ contains
         ! set (1,NY) polygon
         call set_1_NY_polygon(dout, din, nw_rgn, nw_drc, ne_rgn, ne_drc)
 
-      enddo
-    enddo
+      end do
+    end do
 
     ! north pole
     call set_next_polygon(nicam, TOP_POLE, get_polygon_index(1,NY,lin*2-lin_1d+1))
@@ -1053,7 +1089,7 @@ contains
         call set_next_polygon(nicam, polygon_index, get_polygon_index(i+1,1+1,l))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(i  ,1+1,l))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(i-1,1  ,l))
-      enddo
+      end do
     case(4) ! south east side
       do i = 2, NX-1
         polygon_index = get_polygon_index(i,1,l)
@@ -1063,7 +1099,7 @@ contains
         call set_next_polygon(nicam, polygon_index, get_polygon_index(i+1,1+1,l))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(i  ,1+1,l))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(i-1,1  ,l))
-      enddo
+      end do
     case default
       write(0,'(A)') "set_sw_side_polygon direc error"
       stop
@@ -1092,7 +1128,7 @@ contains
         call set_next_polygon(nicam, polygon_index, get_polygon_index(1+1,j+1,l))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(1  ,j+1,l))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(NX,j,nw_rgn))
-      enddo
+      end do
     case(3) ! north east side
       do j = 2, NY-1
         polygon_index = get_polygon_index(1,j,l)
@@ -1102,7 +1138,7 @@ contains
         call set_next_polygon(nicam, polygon_index, get_polygon_index(1+1,j+1,l))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(1  ,j+1,l))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(NX-j+1,NY,nw_rgn))
-      enddo
+      end do
     case default
       write(0,'(A)') "set_nw_side_polygon direc error"
       stop
@@ -1131,7 +1167,7 @@ contains
         call set_next_polygon(nicam, polygon_index, get_polygon_index(i+1,1,ne_rgn))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(i  ,1,ne_rgn))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(i-1,NY  ,l))
-      enddo
+      end do
     case(2) ! north west side
       do i = 2, NX-1
         polygon_index = get_polygon_index(i,NY,l)
@@ -1141,7 +1177,7 @@ contains
         call set_next_polygon(nicam, polygon_index, get_polygon_index(1,NY-i+1,ne_rgn))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(1,NY-i+2,ne_rgn))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(i-1,NY  ,l))
-      enddo
+      end do
     case default
       write(0,'(A)') "set_ne_side_polygon direc error"
       stop
@@ -1170,7 +1206,7 @@ contains
         call set_next_polygon(nicam, polygon_index, get_polygon_index(1,j+1,se_rgn))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(NX  ,j+1,l))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(NX-1,j  ,l))
-      enddo
+      end do
     case(1) ! south west side
       do j = 2, NY-1
         polygon_index = get_polygon_index(NX,j,l)
@@ -1180,7 +1216,7 @@ contains
         call set_next_polygon(nicam, polygon_index, get_polygon_index(NX-j+1,1,se_rgn))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(NX  ,j+1,l))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(NX-1,j  ,l))
-      enddo
+      end do
     case default
       write(0,'(A)') "set_se_side_polygon direc error"
       stop
@@ -1213,9 +1249,9 @@ contains
         call set_next_polygon(nicam, polygon_index, get_polygon_index(1+1,1  ,l))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(1+1,1+1,l))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(1  ,1+1,l))
-      endif
+      end if
       return
-    endif
+    end if
 
     if ((din>=2).and.(din<=lin_1d)) then ! sw side of outer domain
       select case (sw_drc)
@@ -1235,7 +1271,7 @@ contains
         stop
       end select
       return
-    endif
+    end if
 
 
     if (mod(din-1, lin_1d) == 0) then ! nw side of outer domain
@@ -1256,7 +1292,7 @@ contains
         stop
       end select
       return
-    endif
+    end if
 
 1000 continue
 
@@ -1299,9 +1335,9 @@ contains
         call set_next_polygon(nicam, polygon_index, get_polygon_index(1   ,1   ,se_rgn))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(NX  ,1   ,ne_rgn))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(NX-1,NY  ,l))
-      endif
+      end if
       return
-    endif
+    end if
 
     if ((din >= lin-lin_1d+1).and.(din <= lin)) then ! ne side of outer domain
       select case(ne_drc)
@@ -1321,7 +1357,7 @@ contains
         stop
       end select
       return
-    endif
+    end if
 
     if (mod(din, lin_1d) == 0) then ! se side of outer domain
       select case(se_drc)
@@ -1341,7 +1377,7 @@ contains
       end select
 
       return
-    endif
+    end if
 
 
 1000 continue
@@ -1379,9 +1415,9 @@ contains
         call set_next_polygon(nicam, polygon_index, get_polygon_index(NX  ,1   ,se_rgn))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(NX  ,2   ,l))
         call set_next_polygon(nicam, polygon_index, get_polygon_index(NX-1,1   ,l))
-      endif
+      end if
       return
-    endif
+    end if
 
 
     if (din < lin_1d) then ! sw side
@@ -1401,7 +1437,7 @@ contains
         stop
       end select
       return
-    endif
+    end if
 
     if (mod(din, lin_1d) == 0) then ! se side
       select case(se_drc)
@@ -1420,7 +1456,7 @@ contains
         stop
       end select
       return
-    endif
+    end if
 
 
 1000 continue
@@ -1458,9 +1494,9 @@ contains
         call set_next_polygon(nicam, polygon_index, get_polygon_index(1   ,NY  ,nw_rgn))
       else ! south
         goto 1000
-      endif
+      end if
       return
-    endif
+    end if
 
     if (mod(din-1, lin_1d) == 0) then ! nw side
       select case(nw_drc)
@@ -1479,7 +1515,7 @@ contains
         stop
       end select
       return
-    endif
+    end if
 
     if (din> lin-lin_1d+1) then ! ne side
       select case(ne_drc)
@@ -1499,7 +1535,7 @@ contains
         stop
       end select
       return
-    endif
+    end if
 
 1000 continue
 
@@ -1518,7 +1554,7 @@ contains
   subroutine set_polar_polygon(this)
     use jcf_mesh_base,only : polygon_type, is_in_this_polygon,get_data_point_x,get_data_point_y
     use jcf_misc, only: LOG_FID => jcf_log_fid
-    type(mesh_type), intent(INOUT) :: this !< this mesh
+    type(mesh_type), intent(INOUT) :: this !! this mesh
 
     type(polygon_type),pointer :: polygon
 
@@ -1579,7 +1615,7 @@ contains
 
 
   !!========================================================================
-  !> consist filename for NICAM region data file.
+  !! consist filename for NICAM region data file.
   !!
   !! NICAM region data file name consist of:
   !!   `basename`+".rgn"+`XXXXX`
@@ -1634,9 +1670,9 @@ contains
         do i = 1, NX
           write(fid, *) get_data_point_x(nicam, get_polygon_index(i,j,k)),&
                &        get_data_point_y(nicam, get_polygon_index(i,j,k))
-        enddo
-      enddo
-    enddo
+        end do
+      end do
+    end do
 
     close(fid)
 
@@ -1679,9 +1715,9 @@ contains
           write(fid, *) trim(data_str)
           write(data_str, "(2f10.5,3I2,A,I5)") lon, lat, font_size, font_angle, font_no, " TC ", grid_index
           write(fid, *) trim(data_str)
-        enddo
-      enddo
-    enddo
+        end do
+      end do
+    end do
 
     close(fid)
 
@@ -1713,35 +1749,35 @@ contains
           if ((i==1).and.(j==1)) then
             do p = 1, 5
               write(fid, *) get_point_x(nicam, get_polygon_index(i,j,k), p), get_point_y(nicam, get_polygon_index(i,j,k), p)
-            enddo
+            end do
             write(fid, *) get_point_x(nicam, get_polygon_index(i,j,k), 1), get_point_y(nicam, get_polygon_index(i,j,k), 1)
           else
             do p = 1, 6
               write(fid, *) get_point_x(nicam, get_polygon_index(i,j,k), p), get_point_y(nicam, get_polygon_index(i,j,k), p)
-            enddo
+            end do
             write(fid, *) get_point_x(nicam, get_polygon_index(i,j,k), 1), get_point_y(nicam, get_polygon_index(i,j,k), 1)
-          endif
+          end if
           write(fid, *) ">"
-        enddo
-      enddo
+        end do
+      end do
       if (k == 1) then ! add north pole graph
         do p = 1, 5
           write(fid, *) get_point_x(nicam, TOP_POLE, p), get_point_y(nicam, TOP_POLE, p)
-        enddo
+        end do
         write(fid, *) get_point_x(nicam, TOP_POLE, 1), get_point_y(nicam, TOP_POLE, 1)
         write(fid, *) ">"
-      endif
+      end if
 
       if (k == 6) then ! add south pole graph
         do p = 1, 5
           write(fid, *) get_point_x(nicam, BOT_POLE, p), get_point_y(nicam, BOT_POLE, p)
-        enddo
+        end do
         write(fid, *) get_point_x(nicam, BOT_POLE, 1), get_point_y(nicam, BOT_POLE, 1)
         write(fid, *) ">"
-      endif
+      end if
 
       close(fid)
-    enddo
+    end do
 
     return
 

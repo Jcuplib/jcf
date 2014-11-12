@@ -32,46 +32,50 @@
 module io_grid
   use jcf_mesh_base, only : mesh_type
   implicit none
-  private
 
   public :: io
 
-  public :: init_grid !< initialize io grid
+  public :: init_grid
   public :: read_grid
 
-  public :: get_data ! real(kind=8) function (NX, NY)
-  public :: get_data_grid_x ! real(kind=8) function (NX, NY)
-  public :: get_data_grid_y ! real(kind=8) function (NX, NY)
-  public :: get_volume_grid_x ! real(kind=8) function (NX+1, NY+1)
-  public :: get_volume_grid_y ! real(kind=8) function (NX+1, NY+1)
+  public :: get_data
+  public :: get_data_grid_x
+  public :: get_data_grid_y
+  public :: get_volume_grid_x
+  public :: get_volume_grid_y
 
-  public :: get_grid_size ! subroutine (NNX, NNY, XDIV, YDIV)
+  public :: get_grid_size
 
-  public :: get_polygon_index ! integer funciton (i, j)
+  public :: get_polygon_index
   public :: get_polygon_tuple 
 
   public :: get_polygon_from_idx
 
-  public :: cal_lat_lon_to_index ! subroutine(nicam_lat, nicam_lon, lat_index, lon_index)
+  public :: cal_lat_lon_to_index
 
-  integer, parameter :: FNLEN = 1024
+  integer, parameter,private :: FNLEN = 1024
 
   type(mesh_type) :: io !< type(mesh_type) instance for IO grid.
 
-  integer :: NX  !< number of longitudinal grid points
-  integer :: NY  !< number of laitudinal grid points
+  integer,private :: NX  !< number of longitudinal grid points
+  integer,private :: NY  !< number of laitudinal grid points
 
-  real(kind=8), pointer :: xt(:,:) !< data grid x (NX, NY)
-  real(kind=8), pointer :: yt(:,:) !< data grid y (NX, NY)
+  real(kind=8), pointer,private :: xt(:,:) !< data grid x (NX, NY)
+  real(kind=8), pointer,private :: yt(:,:) !< data grid y (NX, NY)
 
-  real(kind=8), pointer :: vx(:,:) !< volume grid x (NX+1, NY+1)
-  real(kind=8), pointer :: vy(:,:) !< volume grid y (NX+1, NY+1)
+  real(kind=8), pointer,private :: vx(:,:) !< volume grid x (NX+1, NY+1)
+  real(kind=8), pointer,private :: vy(:,:) !< volume grid y (NX+1, NY+1)
 
 
 contains
-
-  !===================================================================================
+  !!===================================================================================
   !> initialize io grid
+  !!
+  !! Ether `cnf_file` or `cnf_fid` must be supplied.
+  !! - `cnf_file` is supplied, open/close this file in this routine,
+  !! - `cnf_fid` is supplied, assumes that cnf file is already opened,
+  !! - None of `cnf_file`/`cnf_fid` is given, cause error.
+  !! .
   subroutine init_grid(cnf_file, cnf_fid)
     use jcf_spherical_lib, only : init_spherical_lib
     use jcf_mesh_base, only : init_mesh, init_polygon, set_latlon
@@ -168,7 +172,7 @@ contains
         write(*,      *) 'xxx Not appropriate names in namelist iogrd. STOP.'
         write(LOG_fid,*) 'xxx Not appropriate names in namelist iogrd. STOP.'
         stop
-      endif
+      end if
 
       llmapfile = trim(llmap_dir) // "/" // trim(llmap_base) // ".info"
 
@@ -212,7 +216,9 @@ contains
 
 
   !!===================================================================================
-  !> read io_grid data file and setup mesh_type instance.
+  !> Read io_grid data file and setup mesh_type instance.
+  !!
+  !! Read NX,NY only from llmap.info, then calcurate grid point coords in this routine.
   subroutine read_grid()
     implicit none
     !-----------------------------------------------------------------------------
@@ -226,8 +232,211 @@ contains
     return
   end subroutine read_grid
 
+
+
+  !!===================================================================================
+  !> Return data value of (i,j)th polygon
+  real(kind=8) function get_data(i, j)
+    use jcf_mesh_base, only : get_mesh_data => get_data
+    implicit none
+    integer, intent(IN) :: i !< polygon's tuple
+    integer, intent(IN) :: j !< polygon's tuple
+
+    get_data = get_mesh_data(io, get_polygon_index(i,j))
+
+  end function get_data
+
+
+  !!===================================================================================
+  !> Return x-coord of (i,j)th data point
+  real(kind=8) function get_data_grid_x(i,j)
+    implicit none
+    integer, intent(IN) :: i !< data point's tuple
+    integer, intent(IN) :: j !< data point's tuple
+
+    get_data_grid_x = xt(i,j)
+
+  end function get_data_grid_x
+
+
+  !!===================================================================================
+  !> Return y-coord of (i,j)th data point
+  real(kind=8) function get_data_grid_y(i,j)
+    implicit none
+    integer, intent(IN) :: i !< data point's tuple
+    integer, intent(IN) :: j !< data point's tuple
+
+    get_data_grid_y = yt(i,j)
+
+  end function get_data_grid_y
+
+
+  !!===================================================================================
+  !> Return x-coord of (i,j)th volume point
+  real(kind=8) function get_volume_grid_x(i,j)
+    implicit none
+    integer, intent(IN) :: i !< volume point's tuple
+    integer, intent(IN) :: j !< volume point's tuple
+
+    get_volume_grid_x = vx(i,j)
+
+  end function get_volume_grid_x
+
+
+  !!===================================================================================
+  !> Return y-coord of (i,j)th volume point
+  real(kind=8) function get_volume_grid_y(i,j)
+    implicit none
+    integer, intent(IN) :: i !< volume point's tuple
+    integer, intent(IN) :: j !< volume point's tuple
+
+    get_volume_grid_y = vy(i,j)
+
+  end function get_volume_grid_y
+
+
+  !!===================================================================================
+  !> return size of grid in X/Y direction
+  subroutine get_grid_size(nnx, nny)
+    implicit none
+    integer, intent(OUT) :: nnx !< X size
+    integer, intent(OUT) :: nny !< Y size
+
+    nnx = NX
+    nny = NY
+
+  end subroutine get_grid_size
+
+
+  !!===================================================================================
+  !> Return serial index of (i,j)th polygon.
+  integer function get_polygon_index(i,j)
+    implicit none
+    integer, intent(IN) :: i !< polygon's tuple
+    integer, intent(IN) :: j !< polygon's tuple
+
+    if ( i>NX )then
+      write(0,*) "Err:get_polygon_index/io_grid: i index error:",i
+      call exit(1)
+    end if
+    if (j>NY) then
+      write(0,*) "Err:get_polygon_index/io_grid: j index error:",j
+      call exit(1)
+    end if
+
+    get_polygon_index = i + NX*(j-1)
+
+  end function get_polygon_index
+
+
+  !!===================================================================================
+  !> Return (i,j) tuple of idx'th polygon
+  subroutine get_polygon_tuple( idx, i, j )
+    implicit none
+    integer, intent(IN)  :: idx !< polygon's index
+    integer, intent(OUT) :: i   !< polygon's tuple
+    integer, intent(OUT) :: j   !< polygon's tuple
+
+!!$d  write(0,*)'dbg:get_polygon_tuple:idx=',idx
+!!$d  write(0,*)'dbg:get_polygon_tuple:NX= ',NX
+
+    i = mod(idx-1, NX)+1
+    j = (idx-i)/NX+1
+  end subroutine get_polygon_tuple
+
+
+  !!===================================================================================
+  !> return idx'th polygon(array of coord of each vertecies).
+  subroutine get_polygon_from_idx( idx, poly, ierr )
+    use jcf_mesh_base, only : get_point_x, get_point_y
+    integer,intent(in) :: idx !< polygon's index
+    real(kind=8),allocatable,intent(out) :: poly(:,:) !< coords of polygon
+    integer,intent(out) :: ierr !< non-zero if error.
+
+    integer,parameter :: np = 4 !< number of vertices of this polygon.
+    integer :: i, j, n
+
+    call get_polygon_tuple( idx, i, j )
+    if ( i > NX .or. j > NY ) then
+      write(0,*)'Error:io_grid:invalid idx:',idx
+      call exit(1)
+    end if
+
+    allocate( poly(2,np) )
+
+    do n=1,np
+      poly(1,n)=get_point_x(io,idx,n)
+      poly(2,n)=get_point_y(io,idx,n)
+    end do
+
+    return
+
+  end subroutine get_polygon_from_idx
+
+
+
+
+  !!===================================================================================
+  !> In order to get first guess for polygon search, get (i,j) from given(lon,lat).
+  !!
+  !! \todo Rename this.
+  subroutine cal_lat_lon_to_index( ii,jj,lon,lat )
+    implicit none
+    integer, intent(OUT) :: ii !< polygon's tuple
+    integer, intent(OUT) :: jj !< polygon's tuple
+    real(kind=8), intent(IN) :: lon !< lon[deg] of search point
+    real(kind=8), intent(IN) :: lat !< lat[deg] of search point
+
+    ii = mod(int(lon/360.d0*NX), NX)+1
+    if (ii < 1) ii = 1
+    if (ii > NX) ii = NX
+
+    jj = int((lat+90)/180.d0*NY)+1
+    if (jj < 1) jj = 1
+    if (jj > NY ) jj = NY
+
+  end subroutine cal_lat_lon_to_index
+
+
+
+
+!!$
+!!$ Below should be public ??
+!!$
+!!$
+
+
+
+
+
   !===================================================================================
-  !> set io grid coord.
+  !! Return serial index of (i,j)th data point.
+  integer function get_data_index(i,j)
+    implicit none
+    integer, intent(IN) :: i, j
+
+    get_data_index = i + NX*(j-1)
+
+  end function get_data_index
+
+  !===================================================================================
+  !! Return serial index of (i,j)th volume point.
+  integer function get_volume_index(i,j)
+    implicit none
+    integer, intent(IN) :: i, j
+
+    get_volume_index = i + (NX+1)*(j-1)
+
+  end function get_volume_index
+
+  !===================================================================================
+
+!!$
+!!$ Below are private routines.
+!!$
+!!$
+  !!===================================================================================
+  !! Set io grid coord.
   !!
   !! For IO grid, coord of gridpoints are calc'ed here, not read from file.
   subroutine set_data_grid()
@@ -253,8 +462,8 @@ contains
 
   end subroutine set_data_grid
 
-  !===================================================================================
-  !> Calculate volume grid.
+  !!===================================================================================
+  !! Calculate volume grid.
   subroutine cal_volume_grid()
     implicit none
     integer :: i,j
@@ -289,8 +498,8 @@ contains
   end subroutine cal_volume_grid
 
 
-  !===================================================================================
-  !> Set coord of each data/volume point of type(mesh_type) io
+  !!===================================================================================
+  !! Set coord of each data/volume point of type(mesh_type) io
   subroutine set_grid()
     use jcf_mesh_base, only : set_data_point_location, set_volume_point_location, &
          set_data_point, set_volume_point, set_next_polygon
@@ -398,174 +607,6 @@ contains
 
   end subroutine set_grid
 
-  !===================================================================================
-  !> return size of grid in X/Y direction
-  subroutine get_grid_size(nnx, nny)
-    implicit none
-    integer, intent(OUT) :: nnx, nny
-
-    nnx = NX
-    nny = NY
-
-  end subroutine get_grid_size
-
-  !===================================================================================
-  !> Return serial index of (i,j)th data point.
-  integer function get_data_index(i,j)
-    implicit none
-    integer, intent(IN) :: i, j
-
-    get_data_index = i + NX*(j-1)
-
-  end function get_data_index
-
-  !===================================================================================
-  !> Return serial index of (i,j)th volume point.
-  integer function get_volume_index(i,j)
-    implicit none
-    integer, intent(IN) :: i, j
-
-    get_volume_index = i + (NX+1)*(j-1)
-
-  end function get_volume_index
-
-  !===================================================================================
-  !> Return data value of (i,j)th polygon
-  real(kind=8) function get_data(i, j)
-    use jcf_mesh_base, only : get_mesh_data => get_data
-    implicit none
-    integer, intent(IN) :: i, j
-
-    get_data = get_mesh_data(io, get_polygon_index(i,j))
-
-  end function get_data
-
-  !===================================================================================
-
-  real(kind=8) function get_data_grid_x(i,j)
-    implicit none
-    integer, intent(IN) :: i, j
-
-    get_data_grid_x = xt(i,j)
-
-  end function get_data_grid_x
-
-  !===================================================================================
-
-  real(kind=8) function get_data_grid_y(i,j)
-    implicit none
-    integer, intent(IN) :: i, j
-
-    get_data_grid_y = yt(i,j)
-
-  end function get_data_grid_y
-
-  !===================================================================================
-
-  real(kind=8) function get_volume_grid_x(i,j)
-    implicit none
-    integer, intent(IN) :: i, j
-
-    get_volume_grid_x = vx(i,j)
-
-  end function get_volume_grid_x
-
-  !===================================================================================
-
-  real(kind=8) function get_volume_grid_y(i,j)
-    implicit none
-    integer, intent(IN) :: i, j
-
-    get_volume_grid_y = vy(i,j)
-
-  end function get_volume_grid_y
-
-  !===================================================================================
-
-  !===================================================================================
-  !> Return serial index of (i,j)th polygon.
-  integer function get_polygon_index(i,j)
-    implicit none
-    integer, intent(IN) :: i, j
-
-    if ( i>NX )then
-      write(0,*) "Err:get_polygon_index/io_grid: i index error:",i
-      call exit(1)
-    end if
-    if (j>NY) then
-      write(0,*) "Err:get_polygon_index/io_grid: j index error:",j
-      call exit(1)
-    end if
-
-    get_polygon_index = i + NX*(j-1)
-
-  end function get_polygon_index
-
-  !!===================================================================================
-  !> Return (i,j) tuple of idx'th polygon
-  subroutine get_polygon_tuple( idx, i, j )
-    implicit none
-    integer, intent(IN) :: idx
-    integer, intent(OUT) :: i, j
-
-!!$d  write(0,*)'dbg:get_polygon_tuple:idx=',idx
-!!$d  write(0,*)'dbg:get_polygon_tuple:NX= ',NX
-
-    i = mod(idx-1, NX)+1
-    j = (idx-i)/NX+1
-  end subroutine get_polygon_tuple
-
-  !!===================================================================================
-  !> return idx'th polygon(array of coord of each vertecies).
-  subroutine get_polygon_from_idx( idx, poly, ierr )
-    use jcf_mesh_base, only : get_point_x, get_point_y
-    integer,intent(in) :: idx
-    real(kind=8),allocatable,intent(out) :: poly(:,:)
-    integer,intent(out) :: ierr
-
-    integer,parameter :: np = 4 !< number of vertices of this polygon.
-    integer :: i, j, n
-
-    call get_polygon_tuple( idx, i, j )
-    if ( i > NX .or. j > NY ) then
-      write(0,*)'Error:io_grid:invalid idx:',idx
-      call exit(1)
-    end if
-
-    allocate( poly(2,np) )
-
-    do n=1,np
-      poly(1,n)=get_point_x(io,idx,n)
-      poly(2,n)=get_point_y(io,idx,n)
-    end do
-
-    return
-
-  end subroutine get_polygon_from_idx
-
-
-
-
-  !===================================================================================
-
-  subroutine cal_lat_lon_to_index( ii,jj,lon,lat )
-    implicit none
-    integer, intent(OUT) :: ii
-    integer, intent(OUT) :: jj
-    real(kind=8), intent(IN) :: lon
-    real(kind=8), intent(IN) :: lat
-
-    ii = mod(int(lon/360.d0*NX), NX)+1
-    if (ii < 1) ii = 1
-    if (ii > NX) ii = NX
-
-    jj = int((lat+90)/180.d0*NY)+1
-    if (jj < 1) jj = 1
-    if (jj > NY ) jj = NY
-
-  end subroutine cal_lat_lon_to_index
-
-  !===================================================================================
 
 !!$
 !!$ Below are not maintained, but left as an example of use of jcf.
