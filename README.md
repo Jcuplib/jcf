@@ -36,7 +36,11 @@ and the one for COCO grid.
 These modules are to be used not only mappingtable creation,
 but also tools to visualize relation of two grids, etc.
 
-Currently, application modules for NICAM grid, NICAM-IO grid are
-implemented.  The `example` directory contains mappingtable-creation
+Currently, application modules below are implemented in app directory;
+- for NICAM grid: icosahedoral grid
+- for COOC grid: "Tri-Polar" grid
+- NICAM-IO grid: regular spacing lat-lon grid.
+.
+The `example` directory contains mappingtable-creation
 program for these two grids, as a sample.
 
