@@ -3,10 +3,12 @@ include ../Mkinclude
 LIB	= libjcf.a
 
 OBJS	= \
+ jcf_misc.o \
  jcf_sphere_lib.o \
  jcf_spherical_lib.o \
  jcf_mesh_base.o \
- jcf_coef_base.o
+ jcf_coef_base.o \
+ jcf_maptabfile.o 
 
 MODS	= $(OBJS:.o=.mod)
 
@@ -38,3 +40,4 @@ $(BINDIR) $(INCDIR) $(LIBDIR):
 jcf_coef_base.o: jcf_mesh_base.o jcf_sphere_lib.o
 jcf_mesh_base.o: jcf_sphere_lib.o
 jcf_sphere_lib.o : jcf_spherical_lib.o
+jcf_maptabfile.o : jcf_misc.o

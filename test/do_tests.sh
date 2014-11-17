@@ -12,6 +12,8 @@ is_same_line \
 is_same_point \
 latlon2xyz \
 xyz2latlon \
+mtf_open_close \
+mtf_read_write \
 "
 
 

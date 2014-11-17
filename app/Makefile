@@ -3,7 +3,7 @@ include ../Mkinclude
 OBJS	= \
  nicam_grid.o \
  io_grid.o \
- mod_logfile.o
+ coco_grid.o
 SRCS	= $(OBJS:.o=.f90)
 
 
@@ -20,5 +20,3 @@ clean:
 realclean: clean
 
 distclean: realclean
-
-nicam_grid.o : mod_logfile.o

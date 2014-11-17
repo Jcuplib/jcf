@@ -27,7 +27,7 @@ DBGFLAGS	=
 
 ### Fortran Language related options
 LANGFLAGS	=
-# LANGFLAGS	= -convert big_endian
+LANGFLAGS	+= -convert big_endian
 
 ### other compiler specific options
 FOTHERFLAGS	= 

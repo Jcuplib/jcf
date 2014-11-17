@@ -1,0 +1,11 @@
+# Top include file for -*- makefile -*- of JCF.
+#
+
+### Define JCFDIR and JCFSYS here, or you can define them as
+### environmental variable.
+
+# JCFDIR = @JCFDIR@
+# JCFSYS = @JCFSYS@
+
+include $(JCFDIR)/sysdep/Mkinclude.$(JCFSYS)
+
